@@ -1,9 +1,10 @@
 using System;
+using MCTOPP.Models.Algorithm;
 
 namespace MCTOPP.Helpers.Parsers
 {
     public interface IDataSetParser
     {
-        string Parse();
+        ProblemInput ParseInput(string path);
     }
 }
