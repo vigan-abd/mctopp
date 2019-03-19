@@ -16,13 +16,15 @@ namespace MCTOPP.Models.Algorithm
 
         public override string ToString()
         {
-            return $"TourCount: {TourCount}\n" +
-            $"PointCount: {PointCount}\n" +
-            $"Budget: {Budget}\n" +
-            $"MaxPointsOfType: {String.Join(", ", MaxPointsOfType)}\n" +
-            $"PatternLengths: {String.Join(", ", PatternLengths)}\n" +
-            "Patterns: \n" + String.Join("\n", Patterns.Select(x => String.Join(", ", x))) + 
-            "\nPoints: \n" + String.Join("\n", Points.Select(x => x.ToString()));
+            return $"TourCount: {TourCount}{Environment.NewLine}" +
+            $"PointCount: {PointCount}{Environment.NewLine}" +
+            $"Budget: {Budget}{Environment.NewLine}" +
+            $"MaxPointsOfType: {String.Join(", ", MaxPointsOfType)}{Environment.NewLine}" +
+            $"PatternLengths: {String.Join(", ", PatternLengths)}{Environment.NewLine}" +
+            $"Patterns: {Environment.NewLine}" +
+                String.Join(Environment.NewLine, Patterns.Select(x => String.Join(", ", x))) +
+            $"{Environment.NewLine}Points: {Environment.NewLine}" +
+                String.Join(Environment.NewLine, Points.Select(x => x.ToString()));
         }
     }
 }

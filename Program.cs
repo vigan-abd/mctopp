@@ -14,7 +14,10 @@ namespace MCTOPP
             Parser.Default.ParseArguments<CliArgs>(args)
             .WithParsed<CliArgs>(o =>
             {
-                string path = $"{System.IO.Directory.GetCurrentDirectory()}/{o.InputFile.TrimStart('/')}";
+                var delimiter = Environment.OSVersion.Platform == PlatformID.Unix ||
+                    Environment.OSVersion.Platform == PlatformID.MacOSX ? '/' : '\\';
+                string path =
+                    $"{System.IO.Directory.GetCurrentDirectory()}{delimiter}{o.InputFile.TrimStart(delimiter)}";
                 IDataSetParser parser = new FileParser();
                 var input = parser.ParseInput(path);
                 Console.WriteLine(input);
