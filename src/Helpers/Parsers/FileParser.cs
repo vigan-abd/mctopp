@@ -28,14 +28,14 @@ namespace MCTOPP.Helpers.Parsers
                     {
                         var vals = this.ParseTourCount(text);
                         input.TourCount = vals.TourCount;
-                        input.PointCount = vals.PointCount;
+                        input.PoiCount = vals.PoiCount;
                         input.Budget = vals.Budget;
-                        input.Patterns = new List<List<int>>(input.TourCount);
-                        input.Points = new List<Point>(input.PointCount);
+                        input.Patterns = new List<int[]>(input.TourCount);
+                        input.Pois = new List<Poi>(input.PoiCount);
                     }
                     else if (line == 1)
                     {
-                        input.MaxPointsOfType = this.ParseMaxPointsOfType(text);
+                        input.MaxPoisOfType = this.ParseMaxPoisOfType(text);
                     }
                     else if (line == 2)
                     {
@@ -47,7 +47,7 @@ namespace MCTOPP.Helpers.Parsers
                     }
                     else
                     {
-                        input.Points.Add(this.ParsePoint(text));
+                        input.Pois.Add(this.ParsePoi(text));
                     }
                 }
             }
@@ -55,17 +55,17 @@ namespace MCTOPP.Helpers.Parsers
             return input;
         }
 
-        private (int TourCount, int PointCount, int Budget) ParseTourCount(string raw)
+        private (int TourCount, int PoiCount, int Budget) ParseTourCount(string raw)
         {
             var rawItems = raw.Trim().Split(' ');
             return (
                 TourCount: int.Parse(rawItems[0]),
-                PointCount: int.Parse(rawItems[1]),
+                PoiCount: int.Parse(rawItems[1]),
                 Budget: int.Parse(rawItems[2])
             );
         }
 
-        private List<int> ParseMaxPointsOfType(string raw)
+        private List<int> ParseMaxPoisOfType(string raw)
         {
             return raw.Trim().Split(' ')
                 .Select(x => int.Parse(x))
@@ -79,31 +79,31 @@ namespace MCTOPP.Helpers.Parsers
                 .ToList<int>();
         }
 
-        private List<int> ParsePattern(string raw, int length)
+        private int[] ParsePattern(string raw, int length)
         {
             return raw.Trim().Split(' ')
                 .Take(length)
                 .Select(x => int.Parse(x))
-                .ToList<int>();
+                .ToArray();
         }
 
-        private Point ParsePoint(string raw)
+        private Poi ParsePoi(string raw)
         {
-            var rawPoints = raw.Trim().Split(' ')
+            var rawPois = raw.Trim().Split(' ')
                 .Select(x => float.Parse(x))
                 .ToList<float>();
-            var index = rawPoints.Skip(8).ToList().FindIndex(x => x == 1);
+            var index = rawPois.Skip(8).ToList().FindIndex(x => x == 1);
 
-            return new Point()
+            return new Poi()
             {
-                Id = (int)rawPoints[0],
-                X = rawPoints[1],
-                Y = rawPoints[2],
-                Duration = rawPoints[3],
-                Score = rawPoints[4],
-                Open = rawPoints[5],
-                Close = rawPoints[6],
-                Cost = rawPoints.Count > 7 ? rawPoints[7] : 0,
+                Id = (int)rawPois[0],
+                X = rawPois[1],
+                Y = rawPois[2],
+                Duration = rawPois[3],
+                Score = rawPois[4],
+                Open = rawPois[5],
+                Close = rawPois[6],
+                Cost = rawPois.Count > 7 ? rawPois[7] : 0,
                 Type = index,
             };
         }

@@ -2,7 +2,7 @@ using System;
 
 namespace MCTOPP.Models.Algorithm
 {
-    public class Point
+    public class Poi
     {
         public int Id { get; set; }
         public float X { get; set; }
