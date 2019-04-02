@@ -12,12 +12,12 @@ namespace MCTOPP.Models.Algorithm
         public float Open { get; set; }
         public float Close { get; set; }
         public float Cost { get; set; }
-        public int Type { get; set; }
+        public int[] Type { get; set; }
 
         public override string ToString()
         {
             return $"Id: {Id}, X: {X}, Y: {Y}, Duration: {Duration}, Score: {Score}, " +
-            $"Open: {Open}, Close: {Close}, Cost: {Cost}, Type: {Type}";
+            $"Open: {Open}, Close: {Close}, Cost: {Cost}, Type: {String.Join(',', Type)}";
         }
     }
 }

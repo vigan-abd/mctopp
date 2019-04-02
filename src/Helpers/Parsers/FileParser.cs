@@ -92,9 +92,14 @@ namespace MCTOPP.Helpers.Parsers
             var rawPois = raw.Trim().Split(' ')
                 .Select(x => float.Parse(x))
                 .ToList<float>();
-            var index = rawPois.Skip(8).ToList().FindIndex(x => x == 1);
+            var types = new List<int>();
+            for (int i = 8; i < rawPois.Count; i++)
+            {
+                if (rawPois[i] > 0)
+                    types.Add(i + 1 - 8);
+            }
 
-            return new Poi()
+            var p = new Poi()
             {
                 Id = (int)rawPois[0],
                 X = rawPois[1],
@@ -104,8 +109,10 @@ namespace MCTOPP.Helpers.Parsers
                 Open = rawPois[5],
                 Close = rawPois[6],
                 Cost = rawPois.Count > 7 ? rawPois[7] : 0,
-                Type = index,
+                Type = types.ToArray(),
             };
+
+            return p;
         }
     }
 }
