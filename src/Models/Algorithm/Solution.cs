@@ -100,7 +100,7 @@ namespace MCTOPP.Models.Algorithm
                 var prevSpace = moveIndex >= 0 ? movements[prevPoi] : space;
 
                 // break if no overlap, no need to recalc remaining
-                if (nextSpace.Start >= prevSpace.End) 
+                if (nextSpace.Start >= prevSpace.End)
                     break;
 
                 FilledSpace newSpace = this.CalculateFilledSpace(poi, prevSpace, prevPoi);
@@ -122,6 +122,7 @@ namespace MCTOPP.Models.Algorithm
             this.FilledSpaces.Add(id, space);
             this.Pois.Insert(pos, id);
             this.Duration = this.FilledSpaces[this.Pois.Last()].End - this.MetaData.StartTime;
+            this.CalculateEmptySpaces();
 
             return true;
         }
@@ -163,6 +164,54 @@ namespace MCTOPP.Models.Algorithm
                 return null;
 
             return space;
+        }
+
+        public void CalculateEmptySpaces()
+        {
+            this.EmptySpaces.Clear();
+            if (this.Pois.Count == 0) return;
+
+            var first = this.Pois.First();
+            if (this.FilledSpaces[first].Start > this.MetaData.StartTime)
+            {
+                this.EmptySpaces.Add(new EmptySpace()
+                {
+                    Start = this.MetaData.StartTime,
+                    End = this.FilledSpaces[first].Start - this.MetaData.StartTime,
+                    Before = 0
+                });
+            }
+
+            for (int i = 1; i < this.Pois.Count; i++)
+            {
+                var currPoi = this.Pois[i];
+                var prevPoi = this.Pois[i - 1];
+                var currSpace = this.FilledSpaces[currPoi];
+                var prevSpace = this.FilledSpaces[prevPoi];
+
+                if (currSpace.Start - prevSpace.End > 0)
+                {
+                    this.EmptySpaces.Add(new EmptySpace()
+                    {
+                        Start = prevSpace.End,
+                        End = currSpace.Start,
+                        Before = i,
+                        After = i - 1
+                    });
+                }
+            }
+
+            var last = this.Pois.Last();
+            if (this.FilledSpaces[last].End < this.MetaData.EndTime)
+            {
+                this.EmptySpaces.Add(new EmptySpace()
+                {
+                    Start = this.FilledSpaces[last].End,
+                    End = this.MetaData.EndTime,
+                    Before = -1,
+                    After = this.Pois.Count - 1
+                });
+            }
         }
     }
 }
