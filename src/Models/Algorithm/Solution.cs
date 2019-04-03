@@ -342,5 +342,39 @@ namespace MCTOPP.Models.Algorithm
                 });
             }
         }
+
+        public bool ArePoisUnique()
+        {
+            var set = new HashSet<int>();
+            foreach (var poi in this.Pois)
+            {
+                if (set.Contains(poi))
+                    return false;
+                else
+                    set.Add(poi);
+            }
+            return true;
+        }
+
+        public bool IsPatternValid()
+        {
+            var pattern = this.MetaData.Patterns[0];
+            var curr = pattern.First();
+
+            int cursor = 0;
+            foreach (var poi in this.Pois)
+            {
+                if (this.PoiTypes[poi] == curr)
+                {
+                    cursor++;
+                    if (cursor == pattern.Length)
+                        return true;
+                    else
+                        curr = pattern[cursor];
+                }
+            }
+
+            return false;
+        }
     }
 }
