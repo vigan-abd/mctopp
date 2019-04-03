@@ -37,6 +37,7 @@ namespace MCTOPP
                 // var testPoi = input.Pois[10];
                 // var _res = solution.Insert(testPoi.Id, 3, 2);
                 // var _res = solution.Remove(0);
+                var _res = solution.Swap(5, 5, 1);
 
                 // solutionPois[1].Add(input.Pois[2]);
                 // solutionPois[1].Add(input.Pois[4]);

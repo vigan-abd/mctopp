@@ -99,14 +99,14 @@ namespace MCTOPP.Models.Algorithm
                 var prevPoi = moveIndex >= 0 ? this.Pois[i - 1] : id;
                 var prevSpace = moveIndex >= 0 ? movements[prevPoi] : space;
 
-                // break if no overlap, no need to recalc remaining
-                if (nextSpace.Start >= prevSpace.End)
-                    break;
-
                 FilledSpace newSpace = this.CalculateFilledSpace(poi, prevSpace, prevPoi);
 
                 if (newSpace == null)
                     return false;
+
+                // break if no movement in current space
+                if (newSpace.Start == nextSpace.Start && newSpace.End == nextSpace.End)
+                    break;
 
                 moveIndex++;
                 movements[poi] = newSpace;
@@ -130,6 +130,10 @@ namespace MCTOPP.Models.Algorithm
 
         public bool Remove(int pos)
         {
+            // Check if position is inside range
+            if (pos >= this.Pois.Count || pos < 0)
+                return false;
+
             var movements = new Dictionary<int, FilledSpace>();
             var moveIndex = -1;
             for (int i = pos + 1; i < this.Pois.Count; i++)
@@ -172,6 +176,83 @@ namespace MCTOPP.Models.Algorithm
             this.Pois.RemoveAt(pos);
             this.Duration = this.FilledSpaces[this.Pois.Last()].End - this.MetaData.StartTime;
             this.CalculateEmptySpaces();
+            return true;
+        }
+
+        public bool Swap(int id, int type, int pos)
+        {
+            // Check if position is inside range
+            if (pos > this.Pois.Count)
+                return false;
+
+            var oldPoi = this.Pois[pos];
+            var oldPoiType = this.PoiTypes[oldPoi];
+
+            // Check if insertion violates max allowed poi type
+            if (oldPoiType != type && this.PoiTypeCount[type] + 1 > this.MetaData.MaxPoisOfType[type])
+                return false;
+
+            // Check if insertion violates budget
+            var oldPoiCost = this.MetaData.Costs[oldPoi];
+            var poiCost = this.MetaData.Costs[id];
+            if (this.Cost + poiCost - oldPoiCost > this.MetaData.CostBudget)
+                return false;
+
+            // Check if insertion violates open or close hours for any item
+            FilledSpace space = null;
+            if (pos > 0)
+            {
+                var prevPoi = this.Pois[pos - 1]; // id
+                var prevSpace = this.FilledSpaces[prevPoi];
+                space = this.CalculateFilledSpace(id, prevSpace, prevPoi);
+            }
+            else
+            {
+                space = this.CalculateFilledSpace(id);
+            }
+
+            if (space == null)
+                return false;
+
+            var movements = new Dictionary<int, FilledSpace>();
+            int moveIndex = -1;
+            for (int i = pos + 1; i < this.Pois.Count; i++)
+            {
+                var poi = this.Pois[i]; //id
+                var nextSpace = this.FilledSpaces[poi];
+
+                var prevPoi = moveIndex >= 0 ? this.Pois[i - 1] : id;
+                var prevSpace = moveIndex >= 0 ? movements[prevPoi] : space;
+
+                FilledSpace newSpace = this.CalculateFilledSpace(poi, prevSpace, prevPoi);
+
+                if (newSpace == null)
+                    return false;
+
+                // break if no movement in current space
+                if (newSpace.Start == nextSpace.Start && newSpace.End == nextSpace.End)
+                    break;
+
+                moveIndex++;
+                movements[poi] = newSpace;
+            }
+
+            foreach (var kv in movements)
+            {
+                this.FilledSpaces[kv.Key] = kv.Value;
+            }
+
+            this.PoiTypes[id] = type;
+            this.PoiTypes.Remove(oldPoi);
+            this.PoiTypeCount[oldPoiType]--;
+            this.PoiTypeCount[type]++;
+            this.Cost += poiCost - oldPoiCost;
+            this.FilledSpaces.Add(id, space);
+            this.FilledSpaces.Remove(oldPoi);
+            this.Pois[pos] = id;
+            this.Duration = this.FilledSpaces[this.Pois.Last()].End - this.MetaData.StartTime;
+            this.CalculateEmptySpaces();
+
             return true;
         }
 
