@@ -24,18 +24,35 @@ namespace MCTOPP
                 var input = parser.ParseInput(path);
                 var meta = FillMetaData(input);
 
-                Console.WriteLine(meta.TravelTimes[0][2] == meta.TravelTimes[2][0]);
+                var solution = new Solution(1, meta);
+
+                var pois = new int[] { 3, 6, 9, 5 };
+                var types = new int[] { 3, 2, 4, 8 };
+
+                for (int i = 0; i < pois.Length; i++)
+                {
+                    var poi = input.Pois[pois[i]];
+                    var res = solution.Insert(poi.Id, types[i], i);
+                }
+                // var testPoi = input.Pois[10];
+                // var _res = solution.Insert(testPoi.Id, 3, 2);
+                // var _res = solution.Remove(0);
+
+                // solutionPois[1].Add(input.Pois[2]);
+                // solutionPois[1].Add(input.Pois[4]);
+                // solutionPois[1].Add(input.Pois[14]);
+
+                Console.WriteLine(input.ToString());
             });
         }
 
         static MetaData FillMetaData(ProblemInput input)
         {
-
             var costs = new Dictionary<int, float>();
             var durations = new Dictionary<int, float>();
             var travelTimes = new Dictionary<int, Dictionary<int, float>>();
             var hours = new Dictionary<int, (float From, float To)>();
-            var poiTypes = new Dictionary<int, int>();
+            var poiTypes = new Dictionary<int, int[]>();
             for (int i = 0; i < input.Pois.Count; i++)
             {
                 var poi = input.Pois[i];
@@ -78,7 +95,8 @@ namespace MCTOPP
             {
                 CostBudget = input.Budget,
                 Costs = costs,
-                TimeBudget = input.Pois[0].Close - input.Pois[0].Open,
+                StartTime = input.Pois[0].Open,
+                EndTime = input.Pois[0].Close,
                 Durations = durations,
                 PoiWorkingHours = hours,
                 TravelTimes = travelTimes,
@@ -86,6 +104,7 @@ namespace MCTOPP
                 PoiTypes = poiTypes,
                 MaxPoisOfType = maxPoisOfType,
                 Patterns = patterns,
+                StartingPoint = input.Pois[0],
             };
         }
     }

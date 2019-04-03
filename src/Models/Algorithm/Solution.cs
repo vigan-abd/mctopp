@@ -117,6 +117,7 @@ namespace MCTOPP.Models.Algorithm
                 this.FilledSpaces[kv.Key] = kv.Value;
             }
 
+            this.PoiTypes[id] = type;
             this.PoiTypeCount[type]++;
             this.Cost += poiCost;
             this.FilledSpaces.Add(id, space);
@@ -124,6 +125,53 @@ namespace MCTOPP.Models.Algorithm
             this.Duration = this.FilledSpaces[this.Pois.Last()].End - this.MetaData.StartTime;
             this.CalculateEmptySpaces();
 
+            return true;
+        }
+
+        public bool Remove(int pos)
+        {
+            var movements = new Dictionary<int, FilledSpace>();
+            var moveIndex = -1;
+            for (int i = pos + 1; i < this.Pois.Count; i++)
+            {
+                var poi = this.Pois[i]; //id
+                var nextSpace = this.FilledSpaces[poi];
+
+                FilledSpace newSpace = null;
+                if (i == 1)
+                {
+                    newSpace = this.CalculateFilledSpace(poi);
+                }
+                else
+                {
+                    var prevPoi = moveIndex >= 0 ? this.Pois[i - 1] : this.Pois[pos - 1];
+                    var prevSpace = moveIndex >= 0 ? movements[prevPoi] : this.FilledSpaces[prevPoi];
+                    newSpace = this.CalculateFilledSpace(poi, prevSpace, prevPoi);
+                }
+
+                if (newSpace == null)
+                    return false;
+
+                moveIndex++;
+                movements[poi] = newSpace;
+            }
+
+            foreach (var kv in movements)
+            {
+                this.FilledSpaces[kv.Key] = kv.Value;
+            }
+
+            var deleteId = this.Pois[pos];
+            var deletePoiCost = this.MetaData.Costs[deleteId];
+            var deletePoiType = this.PoiTypes[deleteId];
+
+            this.PoiTypeCount[deletePoiType]--;
+            this.Cost -= deletePoiCost;
+            this.FilledSpaces.Remove(deleteId);
+            this.PoiTypes.Remove(deleteId);
+            this.Pois.RemoveAt(pos);
+            this.Duration = this.FilledSpaces[this.Pois.Last()].End - this.MetaData.StartTime;
+            this.CalculateEmptySpaces();
             return true;
         }
 
