@@ -19,12 +19,16 @@ namespace MCTOPP.Models.Algorithm
 
     public class Solution
     {
+        public int TourCount { get; protected set; }
+
         public float Cost { get; set; }
 
-        public float Duration { get; set; }
+        public float[] Durations { get; set; }
+
+        public float Score { get; set; }
 
         /// <summary>Poi identifiers for each tour</summary>
-        public List<int> Pois { get; set; }
+        public List<int>[] Pois { get; set; }
 
         /// <summary>Poi type of each item, {id, type} keypair</summary>
         public Dictionary<int, int> PoiTypes { get; set; }
@@ -32,35 +36,52 @@ namespace MCTOPP.Models.Algorithm
         /// <summary>Count for each poi type inside solution</summary>
         public Dictionary<int, int> PoiTypeCount { get; set; }
 
-        public Dictionary<int, FilledSpace> FilledSpaces { get; set; }
+        public Dictionary<int, FilledSpace>[] FilledSpaces { get; set; }
 
-        public List<EmptySpace> EmptySpaces { get; set; }
+        public List<EmptySpace>[] EmptySpaces { get; set; }
 
         protected MetaData MetaData { get; set; }
 
         public Solution(int tourCount, MetaData metaData)
         {
             this.MetaData = metaData;
+            this.TourCount = tourCount;
 
-            this.Pois = new List<int>();
+            this.Pois = new List<int>[this.TourCount];
             this.PoiTypes = new Dictionary<int, int>();
             this.PoiTypeCount = new int[10].Select((x, i) => i + 1).ToDictionary(k => k, v => 0);
 
-            this.FilledSpaces = new Dictionary<int, FilledSpace>();
-            this.EmptySpaces = new List<EmptySpace>()
+            this.FilledSpaces = new Dictionary<int, FilledSpace>[this.TourCount];
+            this.EmptySpaces = new List<EmptySpace>[this.TourCount];
+
+            this.Durations = new float[this.TourCount];
+
+            for (int i = 0; i < this.TourCount; i++)
             {
-                new EmptySpace
+                this.Pois[i] = new List<int>();
+                this.FilledSpaces[i] = new Dictionary<int, FilledSpace>();
+                this.EmptySpaces[i] = new List<EmptySpace>()
                 {
-                    Start = this.MetaData.StartTime,
-                    End = this.MetaData.EndTime
-                }
-            };
+                    new EmptySpace
+                    {
+                        Start = this.MetaData.StartTime,
+                        End = this.MetaData.EndTime
+                    }
+                };
+            }
         }
 
-        public bool Insert(int id, int type, int pos)
+        public bool Insert(int id, int type, int pos, int tour)
         {
+            var pois = this.Pois[tour];
+            var filledSpaces = this.FilledSpaces[tour];
+
+            // Check if id exists
+            if (this.PoiTypes.ContainsKey(id))
+                return false;
+
             // Check if position is inside range
-            if (pos > this.Pois.Count)
+            if (pos > pois.Count)
                 return false;
 
             // Check if insertion violates max allowed poi type
@@ -76,8 +97,8 @@ namespace MCTOPP.Models.Algorithm
             FilledSpace space = null;
             if (pos > 0)
             {
-                var prevPoi = this.Pois[pos - 1]; // id
-                var prevSpace = this.FilledSpaces[prevPoi];
+                var prevPoi = pois[pos - 1]; // id
+                var prevSpace = filledSpaces[prevPoi];
                 space = this.CalculateFilledSpace(id, prevSpace, prevPoi);
             }
             else
@@ -91,12 +112,12 @@ namespace MCTOPP.Models.Algorithm
             // Calculate movements of pois that are after curr poi
             var movements = new Dictionary<int, FilledSpace>();
             int moveIndex = -1;
-            for (int i = pos; i < this.Pois.Count; i++)
+            for (int i = pos; i < pois.Count; i++)
             {
-                var poi = this.Pois[i]; //id
-                var nextSpace = this.FilledSpaces[poi];
+                var poi = pois[i]; //id
+                var nextSpace = filledSpaces[poi];
 
-                var prevPoi = moveIndex >= 0 ? this.Pois[i - 1] : id;
+                var prevPoi = moveIndex >= 0 ? pois[i - 1] : id;
                 var prevSpace = moveIndex >= 0 ? movements[prevPoi] : space;
 
                 FilledSpace newSpace = this.CalculateFilledSpace(poi, prevSpace, prevPoi);
@@ -114,32 +135,36 @@ namespace MCTOPP.Models.Algorithm
 
             foreach (var kv in movements)
             {
-                this.FilledSpaces[kv.Key] = kv.Value;
+                filledSpaces[kv.Key] = kv.Value;
             }
 
             this.PoiTypes[id] = type;
             this.PoiTypeCount[type]++;
             this.Cost += poiCost;
-            this.FilledSpaces.Add(id, space);
-            this.Pois.Insert(pos, id);
-            this.Duration = this.FilledSpaces[this.Pois.Last()].End - this.MetaData.StartTime;
-            this.CalculateEmptySpaces();
+            this.Score += this.MetaData.Scores[id];
+            filledSpaces.Add(id, space);
+            pois.Insert(pos, id);
+            this.Durations[tour] = filledSpaces[pois.Last()].End - this.MetaData.StartTime;
+            this.CalculateEmptySpaces(tour);
 
             return true;
         }
 
-        public bool Remove(int pos)
+        public bool Remove(int pos, int tour)
         {
+            var pois = this.Pois[tour];
+            var filledSpaces = this.FilledSpaces[tour];
+
             // Check if position is inside range
-            if (pos >= this.Pois.Count || pos < 0)
+            if (pos >= pois.Count || pos < 0)
                 return false;
 
             var movements = new Dictionary<int, FilledSpace>();
             var moveIndex = -1;
-            for (int i = pos + 1; i < this.Pois.Count; i++)
+            for (int i = pos + 1; i < pois.Count; i++)
             {
-                var poi = this.Pois[i]; //id
-                var nextSpace = this.FilledSpaces[poi];
+                var poi = pois[i]; //id
+                var nextSpace = filledSpaces[poi];
 
                 FilledSpace newSpace = null;
                 if (i == 1)
@@ -148,8 +173,8 @@ namespace MCTOPP.Models.Algorithm
                 }
                 else
                 {
-                    var prevPoi = moveIndex >= 0 ? this.Pois[i - 1] : this.Pois[pos - 1];
-                    var prevSpace = moveIndex >= 0 ? movements[prevPoi] : this.FilledSpaces[prevPoi];
+                    var prevPoi = moveIndex >= 0 ? pois[i - 1] : pois[pos - 1];
+                    var prevSpace = moveIndex >= 0 ? movements[prevPoi] : filledSpaces[prevPoi];
                     newSpace = this.CalculateFilledSpace(poi, prevSpace, prevPoi);
                 }
 
@@ -162,30 +187,38 @@ namespace MCTOPP.Models.Algorithm
 
             foreach (var kv in movements)
             {
-                this.FilledSpaces[kv.Key] = kv.Value;
+                filledSpaces[kv.Key] = kv.Value;
             }
 
-            var deleteId = this.Pois[pos];
+            var deleteId = pois[pos];
             var deletePoiCost = this.MetaData.Costs[deleteId];
             var deletePoiType = this.PoiTypes[deleteId];
 
             this.PoiTypeCount[deletePoiType]--;
             this.Cost -= deletePoiCost;
-            this.FilledSpaces.Remove(deleteId);
+            this.Score -= this.MetaData.Scores[deleteId];
+            filledSpaces.Remove(deleteId);
             this.PoiTypes.Remove(deleteId);
-            this.Pois.RemoveAt(pos);
-            this.Duration = this.FilledSpaces[this.Pois.Last()].End - this.MetaData.StartTime;
-            this.CalculateEmptySpaces();
+            pois.RemoveAt(pos);
+            this.Durations[tour] = filledSpaces[pois.Last()].End - this.MetaData.StartTime;
+            this.CalculateEmptySpaces(tour);
             return true;
         }
 
-        public bool Swap(int id, int type, int pos)
+        public bool Swap(int id, int type, int pos, int tour)
         {
-            // Check if position is inside range
-            if (pos > this.Pois.Count)
+            var pois = this.Pois[tour];
+            var filledSpaces = this.FilledSpaces[tour];
+
+            // Check if id exists
+            if (this.PoiTypes.ContainsKey(id))
                 return false;
 
-            var oldPoi = this.Pois[pos];
+            // Check if position is inside range
+            if (pos > pois.Count)
+                return false;
+
+            var oldPoi = pois[pos];
             var oldPoiType = this.PoiTypes[oldPoi];
 
             // Check if insertion violates max allowed poi type
@@ -202,8 +235,8 @@ namespace MCTOPP.Models.Algorithm
             FilledSpace space = null;
             if (pos > 0)
             {
-                var prevPoi = this.Pois[pos - 1]; // id
-                var prevSpace = this.FilledSpaces[prevPoi];
+                var prevPoi = pois[pos - 1]; // id
+                var prevSpace = filledSpaces[prevPoi];
                 space = this.CalculateFilledSpace(id, prevSpace, prevPoi);
             }
             else
@@ -216,12 +249,12 @@ namespace MCTOPP.Models.Algorithm
 
             var movements = new Dictionary<int, FilledSpace>();
             int moveIndex = -1;
-            for (int i = pos + 1; i < this.Pois.Count; i++)
+            for (int i = pos + 1; i < pois.Count; i++)
             {
-                var poi = this.Pois[i]; //id
-                var nextSpace = this.FilledSpaces[poi];
+                var poi = pois[i]; //id
+                var nextSpace = filledSpaces[poi];
 
-                var prevPoi = moveIndex >= 0 ? this.Pois[i - 1] : id;
+                var prevPoi = moveIndex >= 0 ? pois[i - 1] : id;
                 var prevSpace = moveIndex >= 0 ? movements[prevPoi] : space;
 
                 FilledSpace newSpace = this.CalculateFilledSpace(poi, prevSpace, prevPoi);
@@ -239,7 +272,7 @@ namespace MCTOPP.Models.Algorithm
 
             foreach (var kv in movements)
             {
-                this.FilledSpaces[kv.Key] = kv.Value;
+                filledSpaces[kv.Key] = kv.Value;
             }
 
             this.PoiTypes[id] = type;
@@ -247,11 +280,12 @@ namespace MCTOPP.Models.Algorithm
             this.PoiTypeCount[oldPoiType]--;
             this.PoiTypeCount[type]++;
             this.Cost += poiCost - oldPoiCost;
-            this.FilledSpaces.Add(id, space);
-            this.FilledSpaces.Remove(oldPoi);
-            this.Pois[pos] = id;
-            this.Duration = this.FilledSpaces[this.Pois.Last()].End - this.MetaData.StartTime;
-            this.CalculateEmptySpaces();
+            this.Score += this.MetaData.Scores[id] - this.MetaData.Scores[oldPoi];
+            filledSpaces.Add(id, space);
+            filledSpaces.Remove(oldPoi);
+            pois[pos] = id;
+            this.Durations[tour] = filledSpaces[pois.Last()].End - this.MetaData.StartTime;
+            this.CalculateEmptySpaces(tour);
 
             return true;
         }
@@ -295,32 +329,36 @@ namespace MCTOPP.Models.Algorithm
             return space;
         }
 
-        public void CalculateEmptySpaces()
+        public void CalculateEmptySpaces(int tour)
         {
-            this.EmptySpaces.Clear();
-            if (this.Pois.Count == 0) return;
+            var pois = this.Pois[tour];
+            var filledSpaces = this.FilledSpaces[tour];
+            var emptySpaces = this.EmptySpaces[tour];
 
-            var first = this.Pois.First();
-            if (this.FilledSpaces[first].Start > this.MetaData.StartTime)
+            emptySpaces.Clear();
+            if (pois.Count == 0) return;
+
+            var first = pois.First();
+            if (filledSpaces[first].Start > this.MetaData.StartTime)
             {
-                this.EmptySpaces.Add(new EmptySpace()
+                emptySpaces.Add(new EmptySpace()
                 {
                     Start = this.MetaData.StartTime,
-                    End = this.FilledSpaces[first].Start - this.MetaData.StartTime,
+                    End = filledSpaces[first].Start - this.MetaData.StartTime,
                     Before = 0
                 });
             }
 
-            for (int i = 1; i < this.Pois.Count; i++)
+            for (int i = 1; i < pois.Count; i++)
             {
-                var currPoi = this.Pois[i];
-                var prevPoi = this.Pois[i - 1];
-                var currSpace = this.FilledSpaces[currPoi];
-                var prevSpace = this.FilledSpaces[prevPoi];
+                var currPoi = pois[i];
+                var prevPoi = pois[i - 1];
+                var currSpace = filledSpaces[currPoi];
+                var prevSpace = filledSpaces[prevPoi];
 
                 if (currSpace.Start - prevSpace.End > 0)
                 {
-                    this.EmptySpaces.Add(new EmptySpace()
+                    emptySpaces.Add(new EmptySpace()
                     {
                         Start = prevSpace.End,
                         End = currSpace.Start,
@@ -330,15 +368,15 @@ namespace MCTOPP.Models.Algorithm
                 }
             }
 
-            var last = this.Pois.Last();
-            if (this.FilledSpaces[last].End < this.MetaData.EndTime)
+            var last = pois.Last();
+            if (filledSpaces[last].End < this.MetaData.EndTime)
             {
-                this.EmptySpaces.Add(new EmptySpace()
+                emptySpaces.Add(new EmptySpace()
                 {
-                    Start = this.FilledSpaces[last].End,
+                    Start = filledSpaces[last].End,
                     End = this.MetaData.EndTime,
                     Before = -1,
-                    After = this.Pois.Count - 1
+                    After = pois.Count - 1
                 });
             }
         }
@@ -346,35 +384,49 @@ namespace MCTOPP.Models.Algorithm
         public bool ArePoisUnique()
         {
             var set = new HashSet<int>();
-            foreach (var poi in this.Pois)
+            foreach (var pois in this.Pois)
             {
-                if (set.Contains(poi))
-                    return false;
-                else
-                    set.Add(poi);
+                foreach (var poi in pois)
+                {
+                    if (set.Contains(poi))
+                        return false;
+                    else
+                        set.Add(poi);
+                }
             }
             return true;
         }
 
         public bool IsPatternValid()
         {
-            var pattern = this.MetaData.Patterns[0];
-            var curr = pattern.First();
+            var matches = new bool[this.TourCount];
 
-            int cursor = 0;
-            foreach (var poi in this.Pois)
+            for (int i = 0; i < this.TourCount; i++)
             {
-                if (this.PoiTypes[poi] == curr)
+                var pattern = this.MetaData.Patterns[i];
+                var pois = this.Pois[i];
+                var curr = pattern.First();
+
+                int cursor = 0;
+                foreach (var poi in pois)
                 {
-                    cursor++;
-                    if (cursor == pattern.Length)
-                        return true;
-                    else
-                        curr = pattern[cursor];
+                    if (this.PoiTypes[poi] == curr)
+                    {
+                        cursor++;
+                        if (cursor == pattern.Length)
+                        {
+                            matches[i] = true;
+                            break;
+                        }
+                        else
+                        {
+                            curr = pattern[cursor];
+                        }
+                    }
                 }
             }
 
-            return false;
+            return matches.All(x => x);
         }
     }
 }
