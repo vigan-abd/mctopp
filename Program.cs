@@ -3,6 +3,7 @@ using System.Linq;
 using System.Collections.Generic;
 using CommandLine;
 using MCTOPP.Models.Sys;
+using MCTOPP.Helpers;
 using MCTOPP.Helpers.Parsers;
 using MCTOPP.Models.Algorithm;
 
@@ -44,8 +45,16 @@ namespace MCTOPP
                 // solutionPois[1].Add(input.Pois[4]);
                 // solutionPois[1].Add(input.Pois[14]);
 
+                var nums = new int[] { 1, 2, 3 };
+                var perms = nums.AllCombinations();
+
                 Console.WriteLine(input.ToString());
             });
         }
+
+
+
     }
+
+
 }
