@@ -4,11 +4,16 @@ using System.Linq;
 
 namespace MCTOPP.Models.Algorithm
 {
-    public class FilledSpace
+    public class FilledSpace : ICloneable
     {
         public float Start { get; set; }
         public float End { get; set; }
         public float Size { get => End - Start; }
+
+        public object Clone()
+        {
+            return this.MemberwiseClone();
+        }
     }
 
     public class EmptySpace : FilledSpace
@@ -17,7 +22,7 @@ namespace MCTOPP.Models.Algorithm
         public int After { get; set; } = -1;
     }
 
-    public class Solution
+    public class Solution : ICloneable
     {
         public int TourCount { get; protected set; }
 
@@ -427,6 +432,60 @@ namespace MCTOPP.Models.Algorithm
             }
 
             return matches.All(x => x);
+        }
+
+        public object Clone()
+        {
+            var clone = (Solution)this.MemberwiseClone();
+
+            clone.Durations = (float[])this.Durations.Clone();
+
+            clone.Pois = new List<int>[this.Pois.Length];
+            for (int i = 0; i < this.Pois.Length; i++)
+                clone.Pois[i] = new List<int>(this.Pois[i]);
+
+            clone.PoiTypes = new Dictionary<int, int>();
+            foreach (var item in this.PoiTypes)
+                clone.PoiTypes.Add(item.Key, item.Value);
+
+            clone.PoiTypeCount = new Dictionary<int, int>();
+            foreach (var item in this.PoiTypeCount)
+                clone.PoiTypeCount.Add(item.Key, item.Value);
+
+            clone.FilledSpaces = new Dictionary<int, FilledSpace>[this.FilledSpaces.Length];
+            for (int i = 0; i < this.FilledSpaces.Length; i++)
+            {
+                var spaces = new Dictionary<int, FilledSpace>();
+                foreach (var item in this.FilledSpaces[i])
+                    spaces.Add(item.Key, (FilledSpace)item.Value.Clone());
+                clone.FilledSpaces[i] = spaces;
+            }
+
+            clone.EmptySpaces = new List<EmptySpace>[this.EmptySpaces.Length];
+            for (int i = 0; i < this.EmptySpaces.Length; i++)
+            {
+                var spaces = new List<EmptySpace>();
+                foreach (var item in this.EmptySpaces[i])
+                    spaces.Add((EmptySpace)item.Clone());
+                clone.EmptySpaces[i] = spaces;
+            }
+
+            return clone;
+        }
+
+        public string PrintSummary()
+        {
+            var res = "[";
+            for (int i = 0; i < this.TourCount; i++)
+            {
+                res += "{";
+                foreach (var item in this.Pois[i])
+                {
+                    res += $"{item}-{this.PoiTypes[item]},";
+                }
+                res = res.TrimEnd(',') + "},";
+            }
+            return res.TrimEnd(',') + "]";
         }
     }
 }

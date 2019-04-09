@@ -24,29 +24,33 @@ namespace MCTOPP
                 var input = parser.ParseInput(path);
                 var meta = MetaData.Create(input);
 
-                var solution = new Solution(1, meta);
+                var solution = new Solution(2, meta);
 
                 var pois = new int[] { 3, 6, 9, 5 };
                 var types = new int[] { 3, 2, 4, 8 };
-
                 for (int i = 0; i < pois.Length; i++)
                 {
                     var poi = input.Pois[pois[i]];
                     var res = solution.Insert(poi.Id, types[i], i, 0);
                 }
+                
+                var _pois = new int[] { 2, 4, 14 };
+                var _types = new int[] { 1, 5, 9 };
+                for (int i = 0; i < _pois.Length; i++)
+                {
+                    var poi = input.Pois[_pois[i]];
+                    var res = solution.Insert(poi.Id, _types[i], i, 1);
+                }
                 // var testPoi = input.Pois[10];
                 // var _res = solution.Insert(testPoi.Id, 3, 2, 0);
                 // var _res = solution.Remove(0, 0);
-                var _res = solution.Swap(5, 5, 1, 0);
-                // var _res = solution.IsPatternValid();
-                // _res = solution.ArePoisUnique();
+                // var _res = solution.Swap(5, 5, 1, 0);
+                var _res = solution.ArePoisUnique();
+                _res = solution.IsPatternValid();
+                Console.WriteLine(solution.PrintSummary());
 
-                // solutionPois[1].Add(input.Pois[2]);
-                // solutionPois[1].Add(input.Pois[4]);
-                // solutionPois[1].Add(input.Pois[14]);
-
-                var nums = new int[] { 1, 2, 3 };
-                var perms = nums.AllCombinations();
+                var bruteAlg = new BruteForceAlgorithm();
+                bruteAlg.Solve(input);
 
                 Console.WriteLine(input.ToString());
             });
