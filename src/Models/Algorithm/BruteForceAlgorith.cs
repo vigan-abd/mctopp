@@ -7,6 +7,7 @@ namespace MCTOPP.Models.Algorithm
 {
     public class BruteForceAlgorithm
     {
+        protected NLog.Logger logger = LogFactory.Create();
 
         public Solution Solve(ProblemInput input)
         {
@@ -45,9 +46,12 @@ namespace MCTOPP.Models.Algorithm
 
                 foreach (var solution in tourSolutions)
                 {
-                    // Console.WriteLine(solution.PrintSummary());
                     if (solution.ArePoisUnique() && solution.IsPatternValid())
+                    {
+                        logger.Log(NLog.LogLevel.Info, "Valid Solution");
+                        logger.Log(NLog.LogLevel.Info, solution.PrintSummary());
                         solutions.Add(solution);
+                    }
                 }
             }
 
