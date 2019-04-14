@@ -54,6 +54,7 @@ namespace MCTOPP
                 try
                 {
                     var bruteAlg = new BruteForceAlgorithm();
+                    logger.Log(NLog.LogLevel.Info, "Brute force solution started");
                     bruteAlg.Solve(input);
                 }
                 catch (Exception ex)
