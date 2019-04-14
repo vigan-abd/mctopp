@@ -76,3 +76,8 @@ The movement operations that we perform here are:
 * Shuffle ~ On each tour replace pivot POI with lowest score with other POIs that had lower score (see initial solution step), remove X elements from solution and swap Y elements between tours.
 
 The cooling function is yet to be defined
+
+## Running the program
+Make sure you have installed dotnet core before running the app [https://dotnet.microsoft.com/learn/dotnet/hello-world-tutorial/install](https://dotnet.microsoft.com/learn/dotnet/hello-world-tutorial/install)
+
+In order to install the app you have to run `build.bat` or `build.sh` script based on your OS. If you're in windows you'll have to navigate to build directory to run the app (`.\\bin\\App\\netcoreapp2.2\\win10-x64\\MCTOPP.exe`), in other operating systems a shortcut is generated in current directory (`./program`).
