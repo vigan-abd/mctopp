@@ -3,3 +3,4 @@ obj
 .vscode
 program
 *.log
+.vs
