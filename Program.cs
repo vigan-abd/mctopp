@@ -51,15 +51,24 @@ namespace MCTOPP
                 // logger.Log(NLog.LogLevel.Info, _res ? "Solution is valid" : "Solution is not valid");
                 // logger.Log(NLog.LogLevel.Info, solution.PrintSummary());
 
-                try
+                if (o.BruteForce)
                 {
-                    var bruteAlg = new BruteForceAlgorithm();
-                    logger.Log(NLog.LogLevel.Info, "Brute force solution started");
-                    bruteAlg.Solve(input);
+                    try
+                    {
+                        var alg = new BruteForceAlgorithm();
+                        logger.Log(NLog.LogLevel.Info, "Brute force solution started");
+                        alg.Solve(input);
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.Log(NLog.LogLevel.Error, ex);
+                    }
                 }
-                catch (Exception ex)
+                else
                 {
-                    logger.Log(NLog.LogLevel.Error, ex);
+                    var alg = new SimulatedAnnealingAlgorithm();
+                    logger.Log(NLog.LogLevel.Info, "Simulated Annealing solution started");
+                    alg.Solve(input);
                 }
             });
         }

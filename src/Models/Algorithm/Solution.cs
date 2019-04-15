@@ -47,9 +47,9 @@ namespace MCTOPP.Models.Algorithm
 
         protected MetaData MetaData { get; set; }
 
-        public Solution(int tourCount, MetaData metaData)
+        public Solution(int tourCount, MetaData metadata)
         {
-            this.MetaData = metaData;
+            this.MetaData = metadata;
             this.TourCount = tourCount;
 
             this.Pois = new List<int>[this.TourCount];
@@ -350,7 +350,7 @@ namespace MCTOPP.Models.Algorithm
                 {
                     Start = this.MetaData.StartTime,
                     End = filledSpaces[first].Start - this.MetaData.StartTime,
-                    Before = 0
+                    After = 0
                 });
             }
 
@@ -367,8 +367,8 @@ namespace MCTOPP.Models.Algorithm
                     {
                         Start = prevSpace.End,
                         End = currSpace.Start,
-                        Before = i,
-                        After = i - 1
+                        Before = i - 1,
+                        After = i
                     });
                 }
             }
@@ -380,8 +380,7 @@ namespace MCTOPP.Models.Algorithm
                 {
                     Start = filledSpaces[last].End,
                     End = this.MetaData.EndTime,
-                    Before = -1,
-                    After = pois.Count - 1
+                    Before = pois.Count - 1
                 });
             }
         }
@@ -481,11 +480,11 @@ namespace MCTOPP.Models.Algorithm
                 res += "{";
                 foreach (var item in this.Pois[i])
                 {
-                    res += $"{item}-{this.PoiTypes[item]},";
+                    res += $"{item}->{this.PoiTypes[item]},";
                 }
                 res = res.TrimEnd(',') + "},";
             }
-            return res.TrimEnd(',') + "]";
+            return res.TrimEnd(',') + $"] Score: {this.Score}";
         }
     }
 }

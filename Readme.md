@@ -34,7 +34,7 @@ Once we discart the malicious POIs then we can apply one of the following strate
 * Group POIs of type that match the pattern and then choose the ones that have highest satisfaction factor. E.g. if we have pattern `3,2,4,8` we sort POIs of type 3 by score and select the one that has highest score. We follow the same flow for remaining types in pattern.
 * Group POIs of type that match the pattern and then choose the ones that have shortes avg distance to other POIs. The basic idea is that if we choose the POIs that are closer to others then there's a chance that we may include higher number of POIs inside our solution.
 
-Once we've chosen pivot POIs we cn sort remaining POIs in descending order based on their score and perform sequencial insertion to fill empty spaces without violating constraints.
+Once we've chosen pivot POIs we can sort remaining POIs in descending order based on their score and perform sequencial insertion to fill empty spaces without violating constraints.
 
 
 ## Simulated annealing
