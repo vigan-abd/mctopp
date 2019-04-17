@@ -46,10 +46,10 @@ namespace MCTOPP.Models.Algorithm
 
                 foreach (var solution in tourSolutions)
                 {
-                    if (solution.ArePoisUnique() && solution.IsPatternValid())
+                    if (solution.IsValid)
                     {
-                        logger.Log(NLog.LogLevel.Info, "Valid Solution");
-                        logger.Log(NLog.LogLevel.Info, solution.PrintSummary());
+                        logger.Log(NLog.LogLevel.Debug, "Valid Solution");
+                        logger.Log(NLog.LogLevel.Debug, solution.PrintSummary());
                         solutions.Add(solution);
                     }
                 }

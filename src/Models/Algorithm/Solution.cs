@@ -47,6 +47,8 @@ namespace MCTOPP.Models.Algorithm
 
         protected MetaData MetaData { get; set; }
 
+        public bool IsValid { get { return this.IsPatternValid() && this.ArePoisUnique(); } }
+
         public Solution(int tourCount, MetaData metadata)
         {
             this.MetaData = metadata;

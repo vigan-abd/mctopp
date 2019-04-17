@@ -7,9 +7,63 @@ namespace MCTOPP.Models.Algorithm
 {
     public class SimulatedAnnealingAlgorithm
     {
+        static Random rand = new Random();
+        const int maxIterWithoutImprovement = 10;
         protected NLog.Logger logger = LogFactory.Create();
 
-        protected Solution GenerateInitialSolution(ProblemInput input)
+        public Solution Solve(ProblemInput input)
+        {
+            var (s, q) = this.GenerateInitialSolution(input);
+            var best = s;
+            logger.Log(NLog.LogLevel.Debug, "Initial Solution");
+            logger.Log(NLog.LogLevel.Debug, s.PrintSummary());
+
+            var t = 100.0;
+            var iter = 0;
+
+            while (t > 0)
+            {
+                var a = this.FindPoiWithHighestSpace(s);
+                for (int i = 0; i < q.Count; i++)
+                {
+                    var b = q[i];
+
+                    var r = (Solution)s.Clone();
+                    if (!r.Swap(b.Id, b.Type[0], a.pos, a.tour)) // TODO: Set Type decision policy
+                        continue;
+                    if (!r.IsValid)
+                        continue;
+                    // TODO: Fill Empty SPACES
+                    if (!r.IsValid)
+                        continue;
+                    if (r.Score > s.Score || rand.NextDouble() < Math.Pow(Math.E, (r.Score - s.Score) / t))
+                        s = r;
+
+                    if (s.Score > best.Score)
+                    {
+                        best = s;
+                        iter = 0;
+                    }
+                    else
+                    {
+                        iter++;
+                    }
+
+                    if (iter > maxIterWithoutImprovement)
+                    {
+                        // TODO:
+                        // S, Q <~ shuffle(X, Y)
+                        // S <~ fill_empty(Q)
+                    }
+                }
+
+                t = this.CoolingFunction(t);
+            }
+
+            return s;
+        }
+
+        protected (Solution s, List<Poi> q) GenerateInitialSolution(ProblemInput input)
         {
             var metadata = MetaData.Create(input);
             var patternPois = new Dictionary<int, List<Poi>>[input.TourCount];
@@ -77,7 +131,7 @@ namespace MCTOPP.Models.Algorithm
             }
 
             // Pivot insertion complete, try to fill empty spaces
-            var remaining = input.Pois.Skip(0).Where(p =>
+            var other = input.Pois.Skip(1).Where(p =>
             {
                 foreach (var tour in solution.Pois)
                     foreach (var poi in tour)
@@ -85,7 +139,9 @@ namespace MCTOPP.Models.Algorithm
                 return true;
             }).ToList();
 
-            foreach (var poi in remaining)
+            var remaining = new List<Poi>();
+
+            foreach (var poi in other)
             {
                 var spaces = solution.EmptySpaces;
                 var res = false;
@@ -103,17 +159,44 @@ namespace MCTOPP.Models.Algorithm
                     }
                     if (res) break;
                 }
+
+                if (!res) remaining.Add(poi);
             }
 
-            return solution;
+            return (s: solution, q: remaining);
         }
 
-        public Solution Solve(ProblemInput input)
+        protected (int id, int pos, int tour) FindPoiWithHighestSpace(Solution s)
         {
-            var s = this.GenerateInitialSolution(input);
-            logger.Log(NLog.LogLevel.Info, "Initial Solution");
-            logger.Log(NLog.LogLevel.Info, s.PrintSummary());
-            return null;
+            var space = s.FilledSpaces[0].First();
+            var pos = 0;
+            var tour = 0;
+
+            int i = 0, j = 0;
+            foreach (var tourSpaces in s.FilledSpaces)
+            {
+                j = 0;
+                foreach (var otherSpace in tourSpaces)
+                {
+                    if (space.Value.Size < otherSpace.Value.Size)
+                    {
+                        space = otherSpace;
+                        tour = i;
+                        pos = j;
+                    }
+                    j++;
+                }
+                i++;
+            }
+
+            return (id: space.Key, pos: pos, tour: tour);
         }
+
+        protected double CoolingFunction(double t)
+        {
+            // TODO: Implement cooling function
+            return t - 100;
+        }
+
     }
 }

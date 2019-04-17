@@ -48,16 +48,27 @@ namespace MCTOPP
                 // // var _res = solution.Swap(5, 5, 1, 0);
                 // var _res = solution.ArePoisUnique();
                 // _res = solution.IsPatternValid();
-                // logger.Log(NLog.LogLevel.Info, _res ? "Solution is valid" : "Solution is not valid");
-                // logger.Log(NLog.LogLevel.Info, solution.PrintSummary());
+                // logger.Log(NLog.LogLevel.Debug, _res ? "Solution is valid" : "Solution is not valid");
+                // logger.Log(NLog.LogLevel.Debug, solution.PrintSummary());
 
                 if (o.BruteForce)
                 {
                     try
                     {
                         var alg = new BruteForceAlgorithm();
-                        logger.Log(NLog.LogLevel.Info, "Brute force solution started");
-                        alg.Solve(input);
+                        logger.Log(NLog.LogLevel.Debug, "Brute force solution started");
+                        var s = alg.Solve(input);
+                        logger.Log(NLog.LogLevel.Debug, "Brute force solution finished");
+                        if (s.IsValid)
+                        {
+                            logger.Log(NLog.LogLevel.Info, "Solution");
+                            logger.Log(NLog.LogLevel.Info, s.PrintSummary());
+                        }
+                        else
+                        {
+                            logger.Log(NLog.LogLevel.Error, "Solution is not valid!");
+                            logger.Log(NLog.LogLevel.Error, s.PrintSummary());
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -67,8 +78,19 @@ namespace MCTOPP
                 else
                 {
                     var alg = new SimulatedAnnealingAlgorithm();
-                    logger.Log(NLog.LogLevel.Info, "Simulated Annealing solution started");
-                    alg.Solve(input);
+                    logger.Log(NLog.LogLevel.Debug, "Simulated Annealing solution started");
+                    var s = alg.Solve(input);
+                    logger.Log(NLog.LogLevel.Debug, "Simulated Annealing solution finished");
+                    if (s.IsValid)
+                    {
+                        logger.Log(NLog.LogLevel.Info, "Solution");
+                        logger.Log(NLog.LogLevel.Info, s.PrintSummary());
+                    }
+                    else
+                    {
+                        logger.Log(NLog.LogLevel.Error, "Solution is not valid!");
+                        logger.Log(NLog.LogLevel.Error, s.PrintSummary());
+                    }
                 }
             });
         }
