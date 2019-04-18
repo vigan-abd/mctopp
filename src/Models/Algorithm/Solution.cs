@@ -207,7 +207,7 @@ namespace MCTOPP.Models.Algorithm
             filledSpaces.Remove(deleteId);
             this.PoiTypes.Remove(deleteId);
             pois.RemoveAt(pos);
-            this.Durations[tour] = filledSpaces[pois.Last()].End - this.MetaData.StartTime;
+            this.Durations[tour] = filledSpaces.Count > 0 ? filledSpaces[pois.Last()].End - this.MetaData.StartTime : 0;
             this.CalculateEmptySpaces(tour);
             return true;
         }

@@ -8,62 +8,67 @@ namespace MCTOPP.Models.Algorithm
     public class SimulatedAnnealingAlgorithm
     {
         static Random rand = new Random();
-        const int maxIterWithoutImprovement = 10;
+        const int MAX_ITER_WITHOUT_IMPROVEMENT = 10;
+        const double COOLING_FACTOR = 0.7;
+        const double VCF_MIN_TEMP = 25;
+        const double VCF_MAX_TEMP = 1000;
         protected NLog.Logger logger = LogFactory.Create();
 
         public Solution Solve(ProblemInput input)
         {
-            var (s, q) = this.GenerateInitialSolution(input);
-            var best = s;
+            var (S, Q) = this.GenerateInitialSolution(input);
+            var best = S;
             logger.Log(NLog.LogLevel.Debug, "Initial Solution");
-            logger.Log(NLog.LogLevel.Debug, s.PrintSummary());
+            logger.Log(NLog.LogLevel.Debug, S.PrintSummary());
 
-            var t = 100.0;
-            var iter = 0;
+            double T = 100.0;
+            int i = 0, tempIter = 0;
 
-            while (t > 0)
+            while (T > 0)
             {
-                var a = this.FindPoiWithHighestSpace(s);
-                for (int i = 0; i < q.Count; i++)
+                var a = this.FindPoiWithHighestSpace(S);
+                for (int index = 0; index < Q.Count; index++)
                 {
-                    var b = q[i];
+                    var b = Q[index];
 
-                    var r = (Solution)s.Clone();
-                    if (!r.Swap(b.Id, b.Type[0], a.pos, a.tour)) // TODO: Set Type decision policy
+                    var R = (Solution)S.Clone();
+                    if (!R.Swap(b.Id, b.Type[0], a.pos, a.tour)) // TODO: Set Type decision policy
                         continue;
-                    if (!r.IsValid)
+                    if (!R.IsValid)
                         continue;
                     // TODO: Fill Empty SPACES
-                    if (!r.IsValid)
+                    if (!R.IsValid)
                         continue;
-                    if (r.Score > s.Score || rand.NextDouble() < Math.Pow(Math.E, (r.Score - s.Score) / t))
-                        s = r;
+                    if (R.Score > S.Score || rand.NextDouble() < Math.Pow(Math.E, (R.Score - S.Score) / T))
+                        S = R;
 
-                    if (s.Score > best.Score)
+                    if (S.Score > best.Score)
                     {
-                        best = s;
-                        iter = 0;
+                        best = S;
+                        i = 0;
                     }
                     else
                     {
-                        iter++;
+                        i++;
                     }
 
-                    if (iter > maxIterWithoutImprovement)
+                    if (i > MAX_ITER_WITHOUT_IMPROVEMENT)
                     {
                         // TODO:
                         // S, Q <~ shuffle(X, Y)
                         // S <~ fill_empty(Q)
+                        i = 0;
                     }
                 }
 
-                t = this.CoolingFunction(t);
+                T = this.GeometricalCoolingFunction(T, tempIter);
+                tempIter++;
             }
 
-            return s;
+            return S;
         }
 
-        protected (Solution s, List<Poi> q) GenerateInitialSolution(ProblemInput input)
+        protected (Solution S, List<Poi> Q) GenerateInitialSolution(ProblemInput input)
         {
             var metadata = MetaData.Create(input);
             var patternPois = new Dictionary<int, List<Poi>>[input.TourCount];
@@ -88,21 +93,25 @@ namespace MCTOPP.Models.Algorithm
 
             // Perform pivot insertion, if can't insert switch to previous poi and move to next selected element for that poi
             var solution = new Solution(input.TourCount, metadata);
+            int tourPoiPos = 0;
             for (int i = 0; i < patternPois.Length; i++)
             {
                 var pattern = patternPois[i];
                 var select = selected[i];
                 var iter = pattern.ToList();
-                for (int j = 0; j < iter.Count; j++)
+                for (int j = tourPoiPos; j < iter.Count; j++)
                 {
                     // If reverted to beginning of the tour switch to previous tour and perform move to next selected element for that poi
                     if (j < 0)
                     {
                         i--;
                         var prev = patternPois[i].Last();
+                        select = selected[i];
                         select[prev.Key]++;
-                        solution.Remove(solution.Pois[i].Count - 1, i);
+                        tourPoiPos = solution.Pois[i].Count - 1;
+                        solution.Remove(tourPoiPos, i);
                         i--;
+                        break;
                     }
 
                     var pivot = iter[j];
@@ -122,11 +131,17 @@ namespace MCTOPP.Models.Algorithm
                     if (!found)
                     {
                         select[pivot.Key] = 0;
-                        var prev = iter[j - 1];
-                        select[prev.Key]++;
-                        solution.Remove(solution.Pois[i].Count - 1, i);
+                        if (j - 1 >= 0)
+                        {
+                            var prev = iter[j - 1];
+                            select[prev.Key]++;
+                            solution.Remove(solution.Pois[i].Count - 1, i);
+                        }
                         j -= 2;
                     }
+
+                    if(j+ 1 == iter.Count)
+                        tourPoiPos = 0; // Next tour and first elem
                 }
             }
 
@@ -163,7 +178,7 @@ namespace MCTOPP.Models.Algorithm
                 if (!res) remaining.Add(poi);
             }
 
-            return (s: solution, q: remaining);
+            return (S: solution, Q: remaining);
         }
 
         protected (int id, int pos, int tour) FindPoiWithHighestSpace(Solution s)
@@ -192,11 +207,16 @@ namespace MCTOPP.Models.Algorithm
             return (id: space.Key, pos: pos, tour: tour);
         }
 
-        protected double CoolingFunction(double t)
+        protected double GeometricalCoolingFunction(double T, int i)
         {
-            // TODO: Implement cooling function
-            return t - 100;
+            // T[i+1] = T[i] * b ** i, b closer to 1 -> slower decrease
+            return T * Math.Pow(COOLING_FACTOR, i);
         }
 
+        protected double LundyCoolingFunction(double T)
+        {
+            // T[i+1] = T[i] / (1 + b * T[i]), b closer to 0 -> less time in high temp
+            return T / (1 + COOLING_FACTOR * T);
+        }
     }
 }
