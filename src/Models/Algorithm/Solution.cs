@@ -45,7 +45,7 @@ namespace MCTOPP.Models.Algorithm
 
         public List<EmptySpace>[] EmptySpaces { get; set; }
 
-        protected MetaData MetaData { get; set; }
+        public MetaData MetaData { get; protected set; }
 
         public bool IsValid { get { return this.IsPatternValid() && this.ArePoisUnique(); } }
 

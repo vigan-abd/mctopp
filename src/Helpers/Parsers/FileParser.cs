@@ -47,7 +47,7 @@ namespace MCTOPP.Helpers.Parsers
                     }
                     else
                     {
-                        input.Pois.Add(this.ParsePoi(text));
+                        if(text.Length > 0) input.Pois.Add(this.ParsePoi(text));
                     }
                 }
             }

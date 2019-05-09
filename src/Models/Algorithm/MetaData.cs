@@ -8,6 +8,7 @@ namespace MCTOPP.Models.Algorithm
     public class MetaData
     {
         public Poi StartingPoint { get; set; }
+        public Dictionary<int, Poi> PoiIndex { get; set; }
         public float CostBudget { get; set; }
         public Dictionary<int, float> Costs { get; set; }
         public float StartTime { get; set; }
@@ -30,6 +31,7 @@ namespace MCTOPP.Models.Algorithm
             var hours = new Dictionary<int, (float From, float To)>();
             var poiTypes = new Dictionary<int, int[]>();
             var scores = new Dictionary<int, float>();
+            var poiIndex = new Dictionary<int, Poi>();
 
             for (int i = 0; i < input.Pois.Count; i++)
             {
@@ -41,6 +43,7 @@ namespace MCTOPP.Models.Algorithm
                     hours.Add(poi.Id, (From: poi.Open, To: poi.Close));
                     poiTypes.Add(poi.Id, poi.Type);
                     scores.Add(poi.Id, poi.Score);
+                    poiIndex.Add(poi.Id, poi);
                 }
 
                 var travels = new Dictionary<int, float>();
@@ -85,6 +88,7 @@ namespace MCTOPP.Models.Algorithm
                 MaxPoisOfType = maxPoisOfType,
                 Patterns = patterns,
                 StartingPoint = input.Pois[0],
+                PoiIndex = poiIndex
             };
         }
     }
