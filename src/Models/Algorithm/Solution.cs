@@ -222,7 +222,10 @@ namespace MCTOPP.Models.Algorithm
                 return false;
 
             // Check if position is inside range
-            if (pos > pois.Count)
+            if (pos >= pois.Count)
+                return false;
+
+            if (pos == -1)
                 return false;
 
             var oldPoi = pois[pos];

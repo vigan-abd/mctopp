@@ -10,10 +10,16 @@ namespace MCTOPP.Models.Algorithm
     internal class SelectedPoi : Poi
     {
         public bool IsSelected { get; set; } = false;
+
+        public override string ToString()
+        {
+            return base.ToString() + $", IsSelected {IsSelected}";
+        }
     }
 
     public class SimulatedAnnealingAlgorithm
     {
+        int debugCount = 0;
         static Random rand = new Random();
         const int INITIAL_SOLUTION_SEED = 3;
         const int MAX_ITER_WITHOUT_IMPROVEMENT = 10;
@@ -28,7 +34,7 @@ namespace MCTOPP.Models.Algorithm
         public Solution Solve(ProblemInput input)
         {
             var (S, Q, P) = this.GenerateInitialSolution(input, InitialSolutionCritera.Score);
-            var best = S;
+            var best = (Solution)S.Clone();
             logger.Log(NLog.LogLevel.Debug, "Initial Solution");
             logger.Log(NLog.LogLevel.Debug, S.PrintSummary());
 
@@ -37,19 +43,28 @@ namespace MCTOPP.Models.Algorithm
 
             while (T > 0)
             {
+                debugCount++;
                 var a = this.FindPoiWithHighestSpace(S);
+                var isPivot = false;
+
+                if (P[a.tour].ContainsKey(a.type))
+                {
+                    var pivot = P[a.tour][a.type].Find(p => p.IsSelected);
+                    isPivot = pivot.Id == a.id;
+                }
+
                 for (int index = 0; index < Q.Count; index++)
                 {
                     var b = Q[index];
 
                     var R = (Solution)S.Clone();
-                    var type = this.PoiTypeSelectionPolicy(b.Type, R.PoiTypeCount);
+                    var type = this.PoiTypeSelectionPolicy(b.Type, R.PoiTypeCount, a.type);
 
                     // Swap and validate solution
-                    var valid = R.Swap(b.Id, type, a.pos, a.tour);
-                    if (valid) valid = R.IsValid;
+                    var swapValid = R.Swap(b.Id, type, a.pos, a.tour);
+                    var solValid = swapValid ? R.IsValid : false;
 
-                    if (valid)
+                    if (swapValid && solValid)
                     {
                         var inserted = this.FillEmptySpaces(R, Q);
 
@@ -61,30 +76,34 @@ namespace MCTOPP.Models.Algorithm
                             Q[index] = S.MetaData.PoiIndex[a.id];
                             for (int k = inserted.Count - 1; k >= 0; k--)
                                 Q.RemoveAt(inserted[k]);
+
+                            if (isPivot)
+                            {
+                            }
                         }
 
                         if (S.Score > best.Score)
                         {
-                            best = S; i = 0;
+                            best = (Solution)S.Clone();
+                            Debug(S, Q, P);
+                            i = 0;
                         }
                         else
                         {
                             i++;
                         }
-
-                    }
-                    else
-                    {
-                        i++;
+                        break;
                     }
 
-                    if (i > MAX_ITER_WITHOUT_IMPROVEMENT)
-                    {
-                        RemoveRandom(S, Q, P);
-                        SwapPivots(S, Q, P);
-                        InsertRandom(S, Q);
-                        i = 0;
-                    }
+                    i++;
+                }
+
+                if (i > MAX_ITER_WITHOUT_IMPROVEMENT)
+                {
+                    RemoveRandom(S, Q, P);
+                    // SwapPivots(S, Q, P);
+                    InsertRandom(S, Q);
+                    i = 0;
                 }
 
                 T = this.GeometricalCoolingFunction(T, tempIter);
@@ -274,34 +293,46 @@ namespace MCTOPP.Models.Algorithm
             return inserted;
         }
 
-        private (int id, int pos, int tour) FindPoiWithHighestSpace(Solution s)
+        private (int id, int pos, int tour, int type) FindPoiWithHighestSpace(Solution s)
         {
-            var space = s.FilledSpaces[0].First();
-            var pos = 0;
             var tour = 0;
+            var pos = 0;
+            var type = 0;
+            var space = s.FilledSpaces[tour].ElementAt(pos);
 
-            int i = 0, j = 0;
             foreach (var tourSpaces in s.FilledSpaces)
             {
-                j = 0;
                 foreach (var otherSpace in tourSpaces)
                 {
                     if (space.Value.Size < otherSpace.Value.Size)
-                    {
                         space = otherSpace;
-                        tour = i;
-                        pos = j;
-                    }
-                    j++;
                 }
-                i++;
             }
 
-            return (id: space.Key, pos: pos, tour: tour);
+            for (int i = 0; i < s.Pois.Length; i++)
+            {
+                var tourPois = s.Pois[i];
+                for (int j = 0; j < tourPois.Count; j++)
+                {
+                    if (tourPois[j] == space.Key)
+                    {
+                        tour = i;
+                        pos = j;
+                        break;
+                    }
+                }
+            }
+
+            type = s.PoiTypes[space.Key];
+
+            return (id: space.Key, pos: pos, tour: tour, type: type);
         }
 
-        private int PoiTypeSelectionPolicy(int[] types, Dictionary<int, int> counts)
+        private int PoiTypeSelectionPolicy(int[] types, Dictionary<int, int> counts, int prefferedType)
         {
+            if (types.Contains(prefferedType))
+                return prefferedType;
+
             int result = types[0];
             for (int i = 1; i < types.Length; i++)
             {
@@ -358,7 +389,11 @@ namespace MCTOPP.Models.Algorithm
                 var index = rand.Next(0, list.Count);
                 var poi = list[index];
                 var pos = pois.FindIndex(x => x == poi);
-                if (S.Remove(pos, tour)) list.RemoveAt(index);
+                if (S.Remove(pos, tour))
+                {
+                    Q.Add(S.MetaData.PoiIndex[poi]);
+                    list.RemoveAt(index);
+                }
             }
         }
 
@@ -461,6 +496,43 @@ namespace MCTOPP.Models.Algorithm
 
                 }
             }
+        }
+
+        private void Debug(Solution S, List<Poi> Q, Dictionary<int, List<SelectedPoi>>[] P)
+        {
+            var strQ = "Q:" + Environment.NewLine + "[";
+            for (int i = 0; i < Q.Count; i++)
+                strQ += $"{Q[i].Id},";
+            strQ = strQ.TrimEnd(',') + "]" + Environment.NewLine;
+
+            var strS = "S:" + Environment.NewLine + S.PrintSummary() + Environment.NewLine;
+
+            var strP = "P:";
+            for (int i = 0; i < P.Length; i++)
+            {
+                strP += Environment.NewLine + $"{i} -> [";
+                foreach (var item in P[i])
+                    strP += "{" + $"{item.Value.Find(p => p.IsSelected).Id}->{item.Key}" + "},";
+                strP = strP.TrimEnd(',') + "]";
+            }
+            strP += Environment.NewLine;
+
+            var strPattern = "Pattern:";
+            foreach (var item in S.MetaData.Patterns)
+            {
+                strPattern += Environment.NewLine + $"{item.Key} -> [";
+                foreach (var _item in item.Value)
+                    strPattern += $"{_item},";
+                strPattern = strPattern.TrimEnd(',') + "]";
+            }
+
+            logger.Debug(
+                Environment.NewLine +
+                strQ + Environment.NewLine +
+                strS + Environment.NewLine +
+                strP + Environment.NewLine +
+                strPattern
+            );
         }
     }
 }
