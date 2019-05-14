@@ -44,7 +44,7 @@ namespace MCTOPP.Models.Algorithm
             while (T > 0)
             {
                 debugCount++;
-                var a = this.FindPoiWithHighestSpace(S);
+                var a = this.FindPoiWithHighestSpace(S, P);
                 var isPivot = false;
 
                 if (P[a.tour].ContainsKey(a.type))
@@ -55,6 +55,12 @@ namespace MCTOPP.Models.Algorithm
 
                 for (int index = 0; index < Q.Count; index++)
                 {
+                    if (isPivot)
+                    {
+                        i = MAX_ITER_WITHOUT_IMPROVEMENT + 1;
+                        break;
+                    }
+
                     var b = Q[index];
 
                     var R = (Solution)S.Clone();
@@ -79,13 +85,14 @@ namespace MCTOPP.Models.Algorithm
 
                             if (isPivot)
                             {
+                                // test
                             }
                         }
 
                         if (S.Score > best.Score)
                         {
                             best = (Solution)S.Clone();
-                            Debug(S, Q, P);
+                            // Debug(S, Q, P);
                             i = 0;
                         }
                         else
@@ -100,9 +107,21 @@ namespace MCTOPP.Models.Algorithm
 
                 if (i > MAX_ITER_WITHOUT_IMPROVEMENT)
                 {
+                    // logger.Debug("Entered swap regions");
+                    // Debug(S, Q, P);
+
+                    // logger.Debug("Started random remove:");
                     RemoveRandom(S, Q, P);
-                    // SwapPivots(S, Q, P);
+                    // Debug(S, Q, P);
+
+                    // logger.Debug("Started pivot swap");
+                    SwapPivots(S, Q, P);
+                    // Debug(S, Q, P);
+
+                    // logger.Debug("Started random insert");
                     InsertRandom(S, Q);
+                    // Debug(S, Q, P);
+                    // logger.Debug("Left swap regions");
                     i = 0;
                 }
 
@@ -206,7 +225,7 @@ namespace MCTOPP.Models.Algorithm
 
             var skip = rand.Next(INITIAL_SOLUTION_SEED);
             var length = other.Count;
-            Console.WriteLine($"Skip: {skip}");
+
             for (int i = -skip; i < length; i += INITIAL_SOLUTION_SEED)
             {
                 var poi = other[i + skip < length ? i + skip : length - 1];
@@ -215,7 +234,7 @@ namespace MCTOPP.Models.Algorithm
 
                 var selectedTour = rand.Next(spaces.Length);
                 var tour = spaces[selectedTour];
-                Console.WriteLine($"Tour: {selectedTour}");
+
                 foreach (var space in tour)
                 {
                     foreach (var type in poi.Type)
@@ -293,25 +312,31 @@ namespace MCTOPP.Models.Algorithm
             return inserted;
         }
 
-        private (int id, int pos, int tour, int type) FindPoiWithHighestSpace(Solution s)
+        private (int id, int pos, int tour, int type) FindPoiWithHighestSpace(Solution S, Dictionary<int, List<SelectedPoi>>[] P)
         {
             var tour = 0;
             var pos = 0;
             var type = 0;
-            var space = s.FilledSpaces[tour].ElementAt(pos);
+            var space = S.FilledSpaces[tour].ElementAt(pos);
+            var pivots = new List<int>();
 
-            foreach (var tourSpaces in s.FilledSpaces)
+            foreach (var group in P)
+                foreach (var item in group)
+                    pivots.Add(item.Value.Find(p => p.IsSelected).Id);
+
+
+            foreach (var tourSpaces in S.FilledSpaces)
             {
                 foreach (var otherSpace in tourSpaces)
                 {
-                    if (space.Value.Size < otherSpace.Value.Size)
+                    if (space.Value.Size < otherSpace.Value.Size && !pivots.Contains(otherSpace.Key))
                         space = otherSpace;
                 }
             }
 
-            for (int i = 0; i < s.Pois.Length; i++)
+            for (int i = 0; i < S.Pois.Length; i++)
             {
-                var tourPois = s.Pois[i];
+                var tourPois = S.Pois[i];
                 for (int j = 0; j < tourPois.Count; j++)
                 {
                     if (tourPois[j] == space.Key)
@@ -323,7 +348,7 @@ namespace MCTOPP.Models.Algorithm
                 }
             }
 
-            type = s.PoiTypes[space.Key];
+            type = S.PoiTypes[space.Key];
 
             return (id: space.Key, pos: pos, tour: tour, type: type);
         }
@@ -443,6 +468,7 @@ namespace MCTOPP.Models.Algorithm
                     var replacePoi = selectedPivot.Value.ElementAt(replacePoiIndex);
 
                     var selectedPoiIndexInS = S.Pois[i].FindIndex(p => p == selectedPoi.Id);
+                    var selectedPoiTypeInS = S.PoiTypes[selectedPoi.Id];
 
                     var replaceTourInS = -1;
                     var replaceIndexInS = -1;
@@ -461,30 +487,12 @@ namespace MCTOPP.Models.Algorithm
                             }
                         }
                     }
-                    if (replaceTourInS >= 0 && replaceIndexInS >= 0)
-                    {
-                        S.Remove(replaceIndexInS, replaceTourInS);
-                        S.Remove(selectedPoiIndexInS, i);
-                        var res = S.Insert(replacePoi.Id, selectedPivot.Key, selectedPoiIndexInS, i);
-                        if (res)
-                        {
-                            // Add old pivot to Q, new pivot isn't in Q, it resides on S
-                            Q.Add(S.MetaData.PoiIndex[selectedPoi.Id]);
-                            selectedPivot.Value[selectedPoiIndex].IsSelected = false;
-                            selectedPivot.Value[replacePoiIndex].IsSelected = true;
-                        }
-                        else
-                        {
-                            // Revert
-                            S.Insert(selectedPoi.Id, selectedPivot.Key, selectedPoiIndexInS, i);
-                            S.Insert(replacePoi.Id, replaceTypeInS, replaceIndexInS, replaceTourInS);
-                        }
-                    }
-                    else
+
+                    if (replaceTourInS == -1 && replaceIndexInS == -1)
                     {
                         var replacePoiIndexInQ = Q.FindIndex(p => p.Id == replacePoi.Id);
                         var res = S.Swap(replacePoi.Id, selectedPivot.Key, selectedPoiIndexInS, i);
-                        if (res)
+                        if (res && S.IsValid)
                         {
                             // Add old pivot to Q and remove new pivot from Q
                             Q.RemoveAt(replacePoiIndexInQ);
@@ -494,6 +502,7 @@ namespace MCTOPP.Models.Algorithm
                         }
                     }
 
+                    // Debug(S, Q, P);
                 }
             }
         }
