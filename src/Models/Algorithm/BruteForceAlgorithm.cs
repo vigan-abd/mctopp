@@ -18,9 +18,14 @@ namespace MCTOPP.Models.Algorithm
             var perms = keys.Permutations(); // Key combinations
 
             var solutions = new List<Solution>();
+            var i = 0;
 
             foreach (var perm in perms)
             {
+                if (i % 10000 == 0)
+                    logger.Debug("Iter: " + i);
+                i++;
+
                 // perm -> i-th combination
                 var tourSolutions = new List<Solution>();
                 tourSolutions.Add(new Solution(tourCount, metadata));
@@ -48,8 +53,8 @@ namespace MCTOPP.Models.Algorithm
                 {
                     if (solution.IsValid)
                     {
-                        logger.Log(NLog.LogLevel.Debug, "Valid Solution");
-                        logger.Log(NLog.LogLevel.Debug, solution.PrintSummary());
+                        logger.Debug("Valid Solution");
+                        logger.Debug(solution.PrintSummary());
                         solutions.Add(solution);
                     }
                 }

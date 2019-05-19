@@ -5,7 +5,8 @@ using MCTOPP.Helpers;
 
 namespace MCTOPP.Models.Algorithm
 {
-    internal enum InitialSolutionCritera { Score, AverageDistance }
+    internal enum InitialSolutionCriteria { Score, AverageDistance }
+    internal enum CoolingFunction { GeometricalCooling, LundyCooling }
 
     internal class SelectedPoi : Poi
     {
@@ -28,15 +29,17 @@ namespace MCTOPP.Models.Algorithm
         const int MAX_SWAP_TRIES = 4;
         const int MAX_RANDOM_DELETE_OPERATIONS = 12;
         const int MAX_RANDOM_INSERT_OPERATIONS = 6;
+        const InitialSolutionCriteria INITIAL_SOLUTION_CRITERIA = InitialSolutionCriteria.Score;
+        const CoolingFunction COOLING_FUNCTION = CoolingFunction.GeometricalCooling;
 
         private NLog.Logger logger = LogFactory.Create();
 
         public Solution Solve(ProblemInput input)
         {
-            var (S, Q, P) = this.GenerateInitialSolution(input, InitialSolutionCritera.Score);
+            var (S, Q, P) = this.GenerateInitialSolution(input, INITIAL_SOLUTION_CRITERIA);
             var best = (Solution)S.Clone();
-            logger.Log(NLog.LogLevel.Debug, "Initial Solution");
-            logger.Log(NLog.LogLevel.Debug, S.PrintSummary());
+            logger.Debug("Initial Solution");
+            logger.Debug(S.PrintSummary());
 
             double T = 100.0;
             int i = 0, tempIter = 0;
@@ -125,7 +128,11 @@ namespace MCTOPP.Models.Algorithm
                     i = 0;
                 }
 
-                T = this.GeometricalCoolingFunction(T, tempIter);
+                if (COOLING_FUNCTION == CoolingFunction.GeometricalCooling)
+                    T = this.GeometricalCoolingFunction(T, tempIter);
+                else
+                    T = this.LundyCoolingFunction(T);
+
                 tempIter++;
             }
 
@@ -133,7 +140,7 @@ namespace MCTOPP.Models.Algorithm
         }
 
         private (Solution S, List<Poi> Q, Dictionary<int, List<SelectedPoi>>[] P) GenerateInitialSolution(
-            ProblemInput input, InitialSolutionCritera criteria
+            ProblemInput input, InitialSolutionCriteria criteria
             )
         {
             var metadata = MetaData.Create(input);
@@ -149,7 +156,7 @@ namespace MCTOPP.Models.Algorithm
                 foreach (var poiType in input.Patterns[i])
                 {
                     var candidates = input.Pois.FindAll(p => p.Type.Any(t => t == poiType));
-                    if (criteria == InitialSolutionCritera.AverageDistance)
+                    if (criteria == InitialSolutionCriteria.AverageDistance)
                         candidates.Sort((Poi a, Poi b) => metadata.TravelAverages[a.Id] > metadata.TravelAverages[b.Id] ? -1 : 1);
                     else
                         candidates.Sort((Poi a, Poi b) => a.Score > b.Score ? -1 : 1); // desc
@@ -246,7 +253,7 @@ namespace MCTOPP.Models.Algorithm
                 }
             }
 
-            var remaining = other.Skip(1).Where(p =>
+            var remaining = other.Where(p =>
             {
                 foreach (var tour in solution.Pois)
                     foreach (var poi in tour)
@@ -370,13 +377,13 @@ namespace MCTOPP.Models.Algorithm
         private double GeometricalCoolingFunction(double T, int i)
         {
             // T[i+1] = T[i] * b ** i, b closer to 1 -> slower decrease
-            return T * Math.Pow(COOLING_FACTOR, i);
+            return Math.Round(T * Math.Pow(COOLING_FACTOR, i), 2);
         }
 
         private double LundyCoolingFunction(double T)
         {
             // T[i+1] = T[i] / (1 + b * T[i]), b closer to 0 -> less time in high temp
-            return T / (1 + COOLING_FACTOR * T);
+            return Math.Round(T / (1 + COOLING_FACTOR * T), 2);
         }
 
         private void RemoveRandom(Solution S, List<Poi> Q, Dictionary<int, List<SelectedPoi>>[] P)
@@ -460,6 +467,9 @@ namespace MCTOPP.Models.Algorithm
                     var selectedPivotIndex = rand.Next(0, P[i].Count);
                     var selectedPivot = P[i].ElementAt(selectedPivotIndex);
 
+                    if (selectedPivot.Value.Count <= 1)
+                        continue;
+
                     var selectedPoiIndex = selectedPivot.Value.FindIndex(p => p.IsSelected);
                     var selectedPoi = selectedPivot.Value.ElementAt(selectedPoiIndex);
                     var replacePoiIndex = rand.Next(0, selectedPivot.Value.Count);
@@ -542,6 +552,20 @@ namespace MCTOPP.Models.Algorithm
                 strP + Environment.NewLine +
                 strPattern
             );
+        }
+
+        public string PrintParams()
+        {
+            return "SA Params: " + Environment.NewLine + 
+                "INITIAL_SOLUTION_SEED: " + INITIAL_SOLUTION_SEED + Environment.NewLine +
+                "INITIAL_SOLUTION_CRITERIA: " + INITIAL_SOLUTION_CRITERIA + Environment.NewLine +
+                "MAX_ITER_WITHOUT_IMPROVEMENT: " + MAX_ITER_WITHOUT_IMPROVEMENT + Environment.NewLine +
+                "COOLING_FUNCTION: " + COOLING_FUNCTION + Environment.NewLine +
+                "COOLING_FACTOR: " + COOLING_FACTOR + Environment.NewLine +
+                "MIN_SWAP_TRIES: " + MIN_SWAP_TRIES + Environment.NewLine +
+                "MAX_SWAP_TRIES: " + MAX_SWAP_TRIES + Environment.NewLine +
+                "MAX_RANDOM_DELETE_OPERATIONS: " + MAX_RANDOM_DELETE_OPERATIONS + Environment.NewLine +
+                "MAX_RANDOM_INSERT_OPERATIONS: " + MAX_RANDOM_INSERT_OPERATIONS;
         }
     }
 }

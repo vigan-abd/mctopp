@@ -8,7 +8,7 @@ namespace MCTOPP.Helpers
         private static Logger instance;
         private LogFactory() { }
 
-        public static Logger Create()
+        public static Logger Create(string filename = "app.log")
         {
             if (instance == null)
             {
@@ -17,7 +17,7 @@ namespace MCTOPP.Helpers
                 var config = new NLog.Config.LoggingConfiguration();
                 var layout = "${longdate} | ${level:uppercase=true} | ${message}";;
 
-                var logfile = new NLog.Targets.FileTarget("logfile") { FileName = $"{System.IO.Directory.GetCurrentDirectory()}{delimiter}app.log" };
+                var logfile = new NLog.Targets.FileTarget("logfile") { FileName = $"{System.IO.Directory.GetCurrentDirectory()}{delimiter}{filename}" };
                 logfile.Layout = layout;
                 var logconsole = new NLog.Targets.ConsoleTarget("logconsole");
                 logconsole.Layout = layout;
