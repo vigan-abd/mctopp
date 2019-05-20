@@ -47,6 +47,8 @@ namespace MCTOPP.Models.Algorithm
                         this.InsertTypes(splitBranch, 0, false, poi, variant, ref clones);
                     }
                     if (clones.Count > 0) tourSolutions.AddRange(clones);
+
+                    GC.Collect();
                 }
 
                 foreach (var solution in tourSolutions)

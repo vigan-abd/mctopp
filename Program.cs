@@ -30,56 +30,47 @@ namespace MCTOPP
 
                 logger.Info($"Input file: {filename}, Algorithm: {algorithm}");
 
-                if (o.BruteForce)
+                try
                 {
-                    try
+                    Solution s = null;
+
+                    if (o.BruteForce)
                     {
                         var alg = new BruteForceAlgorithm();
                         logger.Debug("Brute force solution started");
-                        var s = alg.Solve(input);
+                        s = alg.Solve(input);
                         logger.Debug("Brute force solution finished");
-                        if (s.IsValid)
-                        {
-                            logger.Info("Solution");
-                            logger.Info(s.PrintSummary());
-                        }
-                        else
-                        {
-                            logger.Error("Solution is not valid!");
-                            logger.Error(s.PrintSummary());
-                        }
                     }
-                    catch (Exception ex)
+                    else if (o.SemiBruteForce)
                     {
-                        logger.Log(NLog.LogLevel.Error, ex);
+                        var alg = new CleverBruteForceAlgorithm();
+                        logger.Debug("Semi brute force solution started");
+                        s = alg.Solve(input);
+                        logger.Debug("Semi brute force solution finished");
                     }
-                }
-                else
-                {
-                    try
+                    else
                     {
                         var alg = new SimulatedAnnealingAlgorithm();
-
                         logger.Info(alg.PrintParams());
                         logger.Debug("Simulated Annealing solution started");
-
-                        var s = alg.Solve(input);
+                        s = alg.Solve(input);
                         logger.Debug("Simulated Annealing solution finished");
-                        if (s.IsValid)
-                        {
-                            logger.Info("Solution");
-                            logger.Info(s.PrintSummary());
-                        }
-                        else
-                        {
-                            logger.Error("Solution is not valid!");
-                            logger.Error(s.PrintSummary());
-                        }
                     }
-                    catch (Exception ex)
+
+                    if (s.IsValid)
                     {
-                        logger.Log(NLog.LogLevel.Error, ex);
+                        logger.Info("Solution");
+                        logger.Info(s.PrintSummary());
                     }
+                    else
+                    {
+                        logger.Error("Solution is not valid!");
+                        logger.Error(s.PrintSummary());
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.Log(NLog.LogLevel.Error, ex);
                 }
             });
         }

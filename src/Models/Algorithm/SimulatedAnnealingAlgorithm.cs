@@ -56,6 +56,11 @@ namespace MCTOPP.Models.Algorithm
                     isPivot = pivot.Id == a.id;
                 }
 
+                if (INITIAL_SOLUTION_CRITERIA == InitialSolutionCriteria.AverageDistance)
+                    Q = Q.OrderByDescending(p => S.MetaData.TravelAverages[p.Id]).ToList();
+                else
+                    Q = Q.OrderByDescending(p => p.Score).ToList();
+
                 for (int index = 0; index < Q.Count; index++)
                 {
                     if (isPivot)
@@ -157,9 +162,9 @@ namespace MCTOPP.Models.Algorithm
                 {
                     var candidates = input.Pois.FindAll(p => p.Type.Any(t => t == poiType));
                     if (criteria == InitialSolutionCriteria.AverageDistance)
-                        candidates.Sort((Poi a, Poi b) => metadata.TravelAverages[a.Id] > metadata.TravelAverages[b.Id] ? -1 : 1);
+                        candidates = candidates.OrderByDescending(p => metadata.TravelAverages[p.Id]).ToList();
                     else
-                        candidates.Sort((Poi a, Poi b) => a.Score > b.Score ? -1 : 1); // desc
+                        candidates = candidates.OrderByDescending(p => p.Score).ToList();
                     pois.Add(poiType, candidates);
                     select.Add(poiType, 0);
                 }
@@ -556,7 +561,7 @@ namespace MCTOPP.Models.Algorithm
 
         public string PrintParams()
         {
-            return "SA Params: " + Environment.NewLine + 
+            return "SA Params: " + Environment.NewLine +
                 "INITIAL_SOLUTION_SEED: " + INITIAL_SOLUTION_SEED + Environment.NewLine +
                 "INITIAL_SOLUTION_CRITERIA: " + INITIAL_SOLUTION_CRITERIA + Environment.NewLine +
                 "MAX_ITER_WITHOUT_IMPROVEMENT: " + MAX_ITER_WITHOUT_IMPROVEMENT + Environment.NewLine +
