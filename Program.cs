@@ -18,9 +18,9 @@ namespace MCTOPP
             .WithParsed<CliArgs>(o =>
             {
                 var filename = Path.GetFileName(o.InputFile);
-                var logger = LogFactory.Create($"{filename}.log");
                 var delimiter = Environment.OSVersion.Platform == PlatformID.Unix ||
                     Environment.OSVersion.Platform == PlatformID.MacOSX ? '/' : '\\';
+                var logger = LogFactory.Create($"logs{delimiter}{filename}.log");
                 string path =
                     $"{Directory.GetCurrentDirectory()}{delimiter}{o.InputFile.TrimStart(delimiter)}";
                 IDataSetParser parser = new FileParser();

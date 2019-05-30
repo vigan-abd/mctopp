@@ -15,3 +15,4 @@ services:
       - ./MCTOPP.csproj:/var/app/MCTOPP.csproj
       - ./omnisharp.json:/var/app/omnisharp.json
       - ./Program.cs:/var/app/Program.cs
+      - ./logs:/var/app/logs
