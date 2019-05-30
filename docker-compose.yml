@@ -1,0 +1,17 @@
+version: '3.4'
+
+services:
+  mctopp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: mctopp:1.0
+    container_name: mctopp
+    volumes:
+      - ./instances:/var/app/instances
+      - ./src:/var/app/src
+      - ./build.sh:/var/app/build.sh
+      - ./instance-preprocessor.js:/var/app/instance-preprocessor.js
+      - ./MCTOPP.csproj:/var/app/MCTOPP.csproj
+      - ./omnisharp.json:/var/app/omnisharp.json
+      - ./Program.cs:/var/app/Program.cs

@@ -57,9 +57,9 @@ namespace MCTOPP.Models.Algorithm
                 }
 
                 if (INITIAL_SOLUTION_CRITERIA == InitialSolutionCriteria.AverageDistance)
-                    Q = Q.OrderByDescending(p => S.MetaData.TravelAverages[p.Id]).ToList();
+                    Q = Q.OrderByDescending(p => S.MetaData.TravelAverages[p.Id]).ToList(); // add randomness
                 else
-                    Q = Q.OrderByDescending(p => p.Score).ToList();
+                    Q = Q.OrderByDescending(p => p.Score).ToList(); // add randomness
 
                 for (int index = 0; index < Q.Count; index++)
                 {
