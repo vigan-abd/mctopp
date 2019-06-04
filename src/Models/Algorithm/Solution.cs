@@ -489,7 +489,7 @@ namespace MCTOPP.Models.Algorithm
                 }
                 res = res.TrimEnd(',') + "},";
             }
-            return res.TrimEnd(',') + $"] Score: {this.Score}";
+            return res.TrimEnd(',') + $"]";
         }
     }
 }

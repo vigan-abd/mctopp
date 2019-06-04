@@ -9,6 +9,7 @@ services:
     container_name: mctopp
     volumes:
       - ./instances:/var/app/instances
+      - ./scripts:/var/app/scripts
       - ./src:/var/app/src
       - ./build.sh:/var/app/build.sh
       - ./instance-preprocessor.js:/var/app/instance-preprocessor.js

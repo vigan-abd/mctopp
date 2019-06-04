@@ -1,0 +1,9 @@
+sa-seed ~ range:2-5; step:1                                             # INITIAL_SOLUTION_SEED
+sa-max-iter ~ range:5-20; step:3                                        # MAX_ITER_WITHOUT_IMPROVEMENT
+sa-cool-fact ~ range:0.1-1; step:0.2                                    # COOLING_FACTOR
+sa-min-swap ~ range:1-5; step:2;                                        # MIN_SWAP_TRIES
+sa-max-swap ~ range:4-10; step:2; condition: sa-min-swap < sa-max-swap  # MAX_SWAP_TRIES
+sa-max-del ~ range:6-21; step:3; condition: sa-max-del > sa-max-ins     # MAX_RANDOM_DELETE_OPERATIONS
+sa-max-ins ~ range:6-21; step:3                                         # MAX_RANDOM_INSERT_OPERATIONS
+sa-init-sol ~ domain:[score, avg_dist]                                  # INITIAL_SOLUTION_CRITERIA
+sa-cool-func ~ domain:[geo, lundy]                                      # COOLING_FUNCTION

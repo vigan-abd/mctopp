@@ -7,6 +7,7 @@ using MCTOPP.Helpers;
 using MCTOPP.Helpers.Parsers;
 using MCTOPP.Models.Algorithm;
 using System.IO;
+using System.Diagnostics;
 
 namespace MCTOPP
 {
@@ -20,7 +21,7 @@ namespace MCTOPP
                 var filename = Path.GetFileName(o.InputFile);
                 var delimiter = Environment.OSVersion.Platform == PlatformID.Unix ||
                     Environment.OSVersion.Platform == PlatformID.MacOSX ? '/' : '\\';
-                var logger = LogFactory.Create($"logs{delimiter}{filename}.log");
+                var logger = LogFactory.Create(o.SkipFileLog, $"logs{delimiter}{filename}.log");
                 string path =
                     $"{Directory.GetCurrentDirectory()}{delimiter}{o.InputFile.TrimStart(delimiter)}";
                 IDataSetParser parser = new FileParser();
@@ -32,7 +33,9 @@ namespace MCTOPP
 
                 try
                 {
+                    var iterations = 0;
                     Solution s = null;
+                    Stopwatch stopwatch = Stopwatch.StartNew();
 
                     if (o.BruteForce)
                     {
@@ -50,32 +53,54 @@ namespace MCTOPP
                     }
                     else
                     {
-                        var alg = new SimulatedAnnealingAlgorithm();
+                        SimulatedAnnealingAlgorithm alg;
+                        alg = !String.IsNullOrWhiteSpace(o.InitialSolutionCriteria) ?
+                            new SimulatedAnnealingAlgorithm(
+                                o.InitialSolutionSeed,
+                                o.MaxIterWithoutImprovement,
+                                o.CoolingFactor,
+                                o.MinSwapTries,
+                                o.MaxSwapTries,
+                                o.MaxRandomDeleteOperations,
+                                o.MaxRandomInsertOperations,
+                                o.InitialSolutionCriteriaValue,
+                                o.CoolingFunctionValue
+                            ) :
+                            new SimulatedAnnealingAlgorithm();
+
                         logger.Info(alg.PrintParams());
                         logger.Debug("Simulated Annealing solution started");
                         s = alg.Solve(input);
                         logger.Debug("Simulated Annealing solution finished");
+                        iterations = alg.TemperatureIterations;
                     }
+                    stopwatch.Stop();
 
                     if (s.IsValid)
                     {
                         logger.Info("Solution");
-                        logger.Info(s.PrintSummary());
+                        logger.Info(s.PrintSummary() + $" Score: {s.Score}");
+                        Console.WriteLine(OutputResult(s, iterations, stopwatch.ElapsedMilliseconds));
                     }
                     else
                     {
                         logger.Error("Solution is not valid!");
                         logger.Error(s.PrintSummary());
+                        throw new Exception("Solution is not valid!");
                     }
                 }
                 catch (Exception ex)
                 {
                     logger.Log(NLog.LogLevel.Error, ex);
+                    throw new Exception(ex.Message, ex);
                 }
             });
         }
 
-
+        static string OutputResult(Solution s, int iterations, long time)
+        {
+            return $"{s.Score};{time};{iterations};{s.PrintSummary()}";
+        }
 
     }
 

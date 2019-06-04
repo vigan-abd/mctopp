@@ -86,7 +86,7 @@ namespace MCTOPP.Models.Algorithm
                                         if (best.Score < c.Score)
                                         {
                                             best = c;
-                                            logger.Info($"iter: {iter} of {iterCount}, poi: {i} of {count}, best so far: {best.PrintSummary()}");
+                                            logger.Info($"iter: {iter} of {iterCount}, poi: {i} of {count}, best so far: {best.PrintSummary()} Score: {best.Score}");
                                         }
                                     }
                                 }

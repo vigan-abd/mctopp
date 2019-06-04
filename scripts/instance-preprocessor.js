@@ -1,3 +1,5 @@
+// Usage: node instance-preprocessor.js file1 file2...
+
 const fs = require('fs');
 const dir = process.cwd();
 

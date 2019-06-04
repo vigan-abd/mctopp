@@ -29,6 +29,7 @@ WORKDIR ./var/app
 COPY ./instances /var/app/instances
 COPY ./logs /var/app/logs
 COPY ./src /var/app/src
+COPY ./scripts /var/app/scripts
 COPY ./build.sh /var/app/build.sh
 COPY ./instance-preprocessor.js /var/app/instance-preprocessor.js
 COPY ./MCTOPP.csproj /var/app/MCTOPP.csproj

@@ -5,8 +5,8 @@ using MCTOPP.Helpers;
 
 namespace MCTOPP.Models.Algorithm
 {
-    internal enum InitialSolutionCriteria { Score, AverageDistance }
-    internal enum CoolingFunction { GeometricalCooling, LundyCooling }
+    public enum InitialSolutionCriteria { Score, AverageDistance }
+    public enum CoolingFunction { GeometricalCooling, LundyCooling }
 
     internal class SelectedPoi : Poi
     {
@@ -20,33 +20,59 @@ namespace MCTOPP.Models.Algorithm
 
     public class SimulatedAnnealingAlgorithm
     {
-        int debugCount = 0;
         static Random rand = new Random();
-        const int INITIAL_SOLUTION_SEED = 3;
-        const int MAX_ITER_WITHOUT_IMPROVEMENT = 10;
-        const double COOLING_FACTOR = 0.7;
-        const int MIN_SWAP_TRIES = 1; // Per tour
-        const int MAX_SWAP_TRIES = 4;
-        const int MAX_RANDOM_DELETE_OPERATIONS = 12;
-        const int MAX_RANDOM_INSERT_OPERATIONS = 6;
-        const InitialSolutionCriteria INITIAL_SOLUTION_CRITERIA = InitialSolutionCriteria.Score;
-        const CoolingFunction COOLING_FUNCTION = CoolingFunction.GeometricalCooling;
+        readonly int initialSolutionSeed = 3;
+        readonly int maxIterWithoutImprovement = 10;
+        readonly double coolingFactor = 0.7;
+        readonly int minSwapTries = 1; // Per tour
+        readonly int maxSwapTries = 4;
+        readonly int maxRandomDeleteOperations = 12;
+        readonly int maxRandomInsertOperations = 6;
+        readonly InitialSolutionCriteria initialSolutionCriteria = InitialSolutionCriteria.Score;
+        readonly CoolingFunction coolingFunction = CoolingFunction.GeometricalCooling;
 
         private NLog.Logger logger = LogFactory.Create();
+        private int temperatureIterations = 0;
+        public int TemperatureIterations { get => temperatureIterations; }
+
+        public SimulatedAnnealingAlgorithm() { }
+
+        public SimulatedAnnealingAlgorithm(
+            int initialSolutionSeed,
+            int maxIterWithoutImprovement,
+            double coolingFactor,
+            int minSwapTries,
+            int maxSwapTries,
+            int maxRandomDeleteOperations,
+            int maxRandomInsertOperations,
+            InitialSolutionCriteria initialSolutionCriteria,
+            CoolingFunction coolingFunction
+        )
+        {
+            this.initialSolutionSeed = initialSolutionSeed;
+            this.maxIterWithoutImprovement = maxIterWithoutImprovement;
+            this.coolingFactor = coolingFactor;
+            this.minSwapTries = minSwapTries;
+            this.maxSwapTries = maxSwapTries;
+            this.maxRandomDeleteOperations = maxRandomDeleteOperations;
+            this.maxRandomInsertOperations = maxRandomInsertOperations;
+            this.initialSolutionCriteria = initialSolutionCriteria;
+            this.coolingFunction = coolingFunction;
+        }
 
         public Solution Solve(ProblemInput input)
         {
-            var (S, Q, P) = this.GenerateInitialSolution(input, INITIAL_SOLUTION_CRITERIA);
+            var (S, Q, P) = this.GenerateInitialSolution(input, initialSolutionCriteria);
             var best = (Solution)S.Clone();
             logger.Debug("Initial Solution");
-            logger.Debug(S.PrintSummary());
+            logger.Debug(S.PrintSummary() + $" Score: {S.Score}");
 
-            double T = 100.0;
-            int i = 0, tempIter = 0;
+            double T = 1000.0;
+            int i = 0;
+            this.temperatureIterations = 0;
 
             while (T > 0)
             {
-                debugCount++;
                 var a = this.FindPoiWithHighestSpace(S, P);
                 var isPivot = false;
 
@@ -56,7 +82,7 @@ namespace MCTOPP.Models.Algorithm
                     isPivot = pivot.Id == a.id;
                 }
 
-                if (INITIAL_SOLUTION_CRITERIA == InitialSolutionCriteria.AverageDistance)
+                if (initialSolutionCriteria == InitialSolutionCriteria.AverageDistance)
                     Q = Q.OrderByDescending(p => S.MetaData.TravelAverages[p.Id]).ToList(); // add randomness
                 else
                     Q = Q.OrderByDescending(p => p.Score).ToList(); // add randomness
@@ -65,7 +91,7 @@ namespace MCTOPP.Models.Algorithm
                 {
                     if (isPivot)
                     {
-                        i = MAX_ITER_WITHOUT_IMPROVEMENT + 1;
+                        i = maxIterWithoutImprovement + 1;
                         break;
                     }
 
@@ -113,7 +139,7 @@ namespace MCTOPP.Models.Algorithm
                     i++;
                 }
 
-                if (i > MAX_ITER_WITHOUT_IMPROVEMENT)
+                if (i > maxIterWithoutImprovement)
                 {
                     // logger.Debug("Entered swap regions");
                     // Debug(S, Q, P);
@@ -133,14 +159,15 @@ namespace MCTOPP.Models.Algorithm
                     i = 0;
                 }
 
-                if (COOLING_FUNCTION == CoolingFunction.GeometricalCooling)
-                    T = this.GeometricalCoolingFunction(T, tempIter);
+                if (coolingFunction == CoolingFunction.GeometricalCooling)
+                    T = this.GeometricalCoolingFunction(T, temperatureIterations);
                 else
                     T = this.LundyCoolingFunction(T);
 
-                tempIter++;
+                temperatureIterations++;
             }
 
+            logger.Info($"Total number of iterations: {temperatureIterations}");
             return best;
         }
 
@@ -235,10 +262,10 @@ namespace MCTOPP.Models.Algorithm
                 return true;
             }).ToList();
 
-            var skip = rand.Next(INITIAL_SOLUTION_SEED);
+            var skip = rand.Next(initialSolutionSeed);
             var length = other.Count;
 
-            for (int i = -skip; i < length; i += INITIAL_SOLUTION_SEED)
+            for (int i = -skip; i < length; i += initialSolutionSeed)
             {
                 var poi = other[i + skip < length ? i + skip : length - 1];
                 var spaces = solution.EmptySpaces;
@@ -379,16 +406,18 @@ namespace MCTOPP.Models.Algorithm
             return result;
         }
 
-        private double GeometricalCoolingFunction(double T, int i)
+        public double GeometricalCoolingFunction(double T, int i)
         {
             // T[i+1] = T[i] * b ** i, b closer to 1 -> slower decrease
-            return Math.Round(T * Math.Pow(COOLING_FACTOR, i), 2);
+            var t = Math.Round(T * Math.Pow(coolingFactor, i), 2);
+            return t == T ? 0 : t;
         }
 
-        private double LundyCoolingFunction(double T)
+        public double LundyCoolingFunction(double T)
         {
             // T[i+1] = T[i] / (1 + b * T[i]), b closer to 0 -> less time in high temp
-            return Math.Round(T / (1 + COOLING_FACTOR * T), 2);
+            var t = Math.Round(T / (1 + coolingFactor * T), 2);
+            return t == T ? 0 : t;
         }
 
         private void RemoveRandom(Solution S, List<Poi> Q, Dictionary<int, List<SelectedPoi>>[] P)
@@ -415,7 +444,7 @@ namespace MCTOPP.Models.Algorithm
                 notPivotPositions[i] = list;
             }
 
-            for (int i = 0; i < MAX_RANDOM_DELETE_OPERATIONS; i++)
+            for (int i = 0; i < maxRandomDeleteOperations; i++)
             {
                 var tour = rand.Next(0, S.TourCount);
                 var list = notPivotPositions[tour];
@@ -436,7 +465,7 @@ namespace MCTOPP.Models.Algorithm
 
         private void InsertRandom(Solution S, List<Poi> Q)
         {
-            for (int i = 0; i < MAX_RANDOM_INSERT_OPERATIONS; i++)
+            for (int i = 0; i < maxRandomInsertOperations; i++)
             {
                 var index = rand.Next(0, Q.Count);
                 var poi = Q[index];
@@ -466,7 +495,7 @@ namespace MCTOPP.Models.Algorithm
         {
             for (int i = 0; i < S.TourCount; i++)
             {
-                int pivotCount = rand.Next(MIN_SWAP_TRIES, MAX_SWAP_TRIES + 1);
+                int pivotCount = rand.Next(minSwapTries, maxSwapTries + 1);
                 for (int r = 0; r < pivotCount; r++)
                 {
                     var selectedPivotIndex = rand.Next(0, P[i].Count);
@@ -529,7 +558,7 @@ namespace MCTOPP.Models.Algorithm
                 strQ += $"{Q[i].Id},";
             strQ = strQ.TrimEnd(',') + "]" + Environment.NewLine;
 
-            var strS = "S:" + Environment.NewLine + S.PrintSummary() + Environment.NewLine;
+            var strS = "S:" + Environment.NewLine + S.PrintSummary() + $" Score: {S.Score}" + Environment.NewLine;
 
             var strP = "P:";
             for (int i = 0; i < P.Length; i++)
@@ -562,15 +591,15 @@ namespace MCTOPP.Models.Algorithm
         public string PrintParams()
         {
             return "SA Params: " + Environment.NewLine +
-                "INITIAL_SOLUTION_SEED: " + INITIAL_SOLUTION_SEED + Environment.NewLine +
-                "INITIAL_SOLUTION_CRITERIA: " + INITIAL_SOLUTION_CRITERIA + Environment.NewLine +
-                "MAX_ITER_WITHOUT_IMPROVEMENT: " + MAX_ITER_WITHOUT_IMPROVEMENT + Environment.NewLine +
-                "COOLING_FUNCTION: " + COOLING_FUNCTION + Environment.NewLine +
-                "COOLING_FACTOR: " + COOLING_FACTOR + Environment.NewLine +
-                "MIN_SWAP_TRIES: " + MIN_SWAP_TRIES + Environment.NewLine +
-                "MAX_SWAP_TRIES: " + MAX_SWAP_TRIES + Environment.NewLine +
-                "MAX_RANDOM_DELETE_OPERATIONS: " + MAX_RANDOM_DELETE_OPERATIONS + Environment.NewLine +
-                "MAX_RANDOM_INSERT_OPERATIONS: " + MAX_RANDOM_INSERT_OPERATIONS;
+                "INITIAL_SOLUTION_SEED: " + initialSolutionSeed + Environment.NewLine +
+                "INITIAL_SOLUTION_CRITERIA: " + initialSolutionCriteria + Environment.NewLine +
+                "MAX_ITER_WITHOUT_IMPROVEMENT: " + maxIterWithoutImprovement + Environment.NewLine +
+                "COOLING_FUNCTION: " + coolingFunction + Environment.NewLine +
+                "COOLING_FACTOR: " + coolingFactor + Environment.NewLine +
+                "MIN_SWAP_TRIES: " + minSwapTries + Environment.NewLine +
+                "MAX_SWAP_TRIES: " + maxSwapTries + Environment.NewLine +
+                "MAX_RANDOM_DELETE_OPERATIONS: " + maxRandomDeleteOperations + Environment.NewLine +
+                "MAX_RANDOM_INSERT_OPERATIONS: " + maxRandomInsertOperations;
         }
     }
 }

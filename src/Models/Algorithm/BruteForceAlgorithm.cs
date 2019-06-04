@@ -56,7 +56,7 @@ namespace MCTOPP.Models.Algorithm
                     if (solution.IsValid)
                     {
                         logger.Debug("Valid Solution");
-                        logger.Debug(solution.PrintSummary());
+                        logger.Debug(solution.PrintSummary() + $" Score: {solution.Score}");
                         solutions.Add(solution);
                     }
                 }
