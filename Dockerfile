@@ -31,7 +31,6 @@ COPY ./logs /var/app/logs
 COPY ./src /var/app/src
 COPY ./scripts /var/app/scripts
 COPY ./build.sh /var/app/build.sh
-COPY ./instance-preprocessor.js /var/app/instance-preprocessor.js
 COPY ./MCTOPP.csproj /var/app/MCTOPP.csproj
 COPY ./omnisharp.json /var/app/omnisharp.json
 COPY ./Program.cs /var/app/Program.cs
