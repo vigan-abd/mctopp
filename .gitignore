@@ -4,3 +4,4 @@ obj
 program
 *.log
 .vs
+*.csv

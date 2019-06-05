@@ -178,7 +178,10 @@ const perms = permGenerator(params, conditions);
 
     i = end;
     fs.writeFile(logFile, `Permutation ${i} reached\n`, { flag: 'a' }, () => null);
+    console.log(end);
   }
 
   console.log("exec time: ", (new Date().valueOf() - start) / 1000);
 })();
+
+// total: 79200
