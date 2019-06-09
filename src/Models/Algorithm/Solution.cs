@@ -140,6 +140,31 @@ namespace MCTOPP.Models.Algorithm
                 movements[poi] = newSpace;
             }
 
+            // Check if exceeds return time to point 0
+            if (movements.Count > 0 && moveIndex == pois.Count - 1)
+            {
+                var last = movements.Last();
+                var travelTime = this.MetaData.TravelTimes[last.Key][0];
+                if (last.Value.End + travelTime > this.MetaData.TimeBudget)
+                    return false;
+            }
+            else if (pos == pois.Count)
+            {
+                var last = space;
+                var travelTime = this.MetaData.TravelTimes[id][0];
+                if (last.End + travelTime > this.MetaData.TimeBudget)
+                    return false;
+            }
+            else
+            {
+                var lastId = pois.Last();
+                var last = filledSpaces[lastId];
+                var travelTime = this.MetaData.TravelTimes[lastId][0];
+                if (last.End + travelTime > this.MetaData.TimeBudget)
+                    return false;
+            }
+
+            //Safe change state
             foreach (var kv in movements)
             {
                 filledSpaces[kv.Key] = kv.Value;
@@ -192,6 +217,38 @@ namespace MCTOPP.Models.Algorithm
                 movements[poi] = newSpace;
             }
 
+            // Check if exceeds return time to point 0
+            if (pos == pois.Count - 1)
+            {
+                var lastId = pois[pois.Count - 2];
+                var last = filledSpaces[lastId];
+                if (moveIndex == pois.Count - 2)
+                {
+                    var _last = movements.Last();
+                    lastId = _last.Key;
+                    last = _last.Value;
+                }
+                var travelTime = this.MetaData.TravelTimes[lastId][0];
+                if (last.End + travelTime > this.MetaData.TimeBudget)
+                    return false;
+            }
+            else if (movements.Count > 0 && moveIndex == pois.Count - 1)
+            {
+                var last = movements.Last();
+                var travelTime = this.MetaData.TravelTimes[last.Key][0];
+                if (last.Value.End + travelTime > this.MetaData.TimeBudget)
+                    return false;
+            }
+            else
+            {
+                var lastId = pois.Last();
+                var last = filledSpaces[lastId];
+                var travelTime = this.MetaData.TravelTimes[lastId][0];
+                if (last.End + travelTime > this.MetaData.TimeBudget)
+                    return false;
+            }
+
+            //Safe change state
             foreach (var kv in movements)
             {
                 filledSpaces[kv.Key] = kv.Value;
@@ -280,6 +337,31 @@ namespace MCTOPP.Models.Algorithm
                 movements[poi] = newSpace;
             }
 
+            // Check if exceeds return time to point 0
+            if (movements.Count > 0 && moveIndex == pois.Count - 1)
+            {
+                var last = movements.Last();
+                var travelTime = this.MetaData.TravelTimes[last.Key][0];
+                if (last.Value.End + travelTime > this.MetaData.TimeBudget)
+                    return false;
+            }
+            else if (pos == pois.Count - 1)
+            {
+                var last = space;
+                var travelTime = this.MetaData.TravelTimes[id][0];
+                if (last.End + travelTime > this.MetaData.TimeBudget)
+                    return false;
+            }
+            else
+            {
+                var lastId = pois.Last();
+                var last = filledSpaces[lastId];
+                var travelTime = this.MetaData.TravelTimes[lastId][0];
+                if (last.End + travelTime > this.MetaData.TimeBudget)
+                    return false;
+            }
+
+            //Safe change state
             foreach (var kv in movements)
             {
                 filledSpaces[kv.Key] = kv.Value;

@@ -109,7 +109,7 @@ const { params, conditions } = paramsProcessor();
 const perms = permGenerator(params, conditions);
 
 (async () => {
-  let i = 0;
+  let i = 0; // adjust starting point here
   const maxThreads = 20; // 200 paralel executions
   const start = new Date().valueOf();
 
