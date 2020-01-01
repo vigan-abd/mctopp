@@ -30,7 +30,7 @@ namespace MCTOPP.Helpers.Parsers
                         input.TourCount = vals.TourCount;
                         input.PoiCount = vals.PoiCount;
                         input.Budget = vals.Budget;
-                        input.Patterns = new List<int[]>(input.TourCount);
+                        input.Patterns = new List<string[]>(input.TourCount);
                         input.Pois = new List<Poi>(input.PoiCount);
                     }
                     else if (line == 1)
@@ -79,11 +79,10 @@ namespace MCTOPP.Helpers.Parsers
                 .ToList<int>();
         }
 
-        private int[] ParsePattern(string raw, int length)
+        private string[] ParsePattern(string raw, int length)
         {
             return raw.Trim().Split(' ')
                 .Take(length)
-                .Select(x => int.Parse(x))
                 .ToArray();
         }
 
@@ -92,11 +91,11 @@ namespace MCTOPP.Helpers.Parsers
             var rawPois = raw.Trim().Split(' ')
                 .Select(x => float.Parse(x))
                 .ToList<float>();
-            var types = new List<int>();
+            var types = new List<string>();
             for (int i = 8; i < rawPois.Count; i++)
             {
                 if (rawPois[i] > 0)
-                    types.Add(i + 1 - 8);
+                    types.Add((i + 1 - 8).ToString());
             }
 
             var p = new Poi()

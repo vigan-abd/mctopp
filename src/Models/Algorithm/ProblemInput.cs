@@ -11,7 +11,7 @@ namespace MCTOPP.Models.Algorithm
         public float Budget { get; set; }
         public List<int> MaxPoisOfType { get; set; }
         public List<int> PatternLengths { get; set; }
-        public List<int[]> Patterns { get; set; }
+        public List<string[]> Patterns { get; set; }
         public List<Poi> Pois { get; set; }
 
         public override string ToString()

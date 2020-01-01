@@ -171,19 +171,19 @@ namespace MCTOPP.Models.Algorithm
             return best;
         }
 
-        private (Solution S, List<Poi> Q, Dictionary<int, List<SelectedPoi>>[] P) GenerateInitialSolution(
+        private (Solution S, List<Poi> Q, Dictionary<string, List<SelectedPoi>>[] P) GenerateInitialSolution(
             ProblemInput input, InitialSolutionCriteria criteria
             )
         {
             var metadata = MetaData.Create(input);
-            var patternPois = new Dictionary<int, List<Poi>>[input.TourCount];
-            var selected = new Dictionary<int, int>[input.TourCount];
+            var patternPois = new Dictionary<string, List<Poi>>[input.TourCount];
+            var selected = new Dictionary<string, int>[input.TourCount];
 
             // Find pois
             for (int i = 0; i < input.Patterns.Count; i++)
             {
-                var pois = new Dictionary<int, List<Poi>>();
-                var select = new Dictionary<int, int>();
+                var pois = new Dictionary<string, List<Poi>>();
+                var select = new Dictionary<string, int>();
 
                 foreach (var poiType in input.Patterns[i])
                 {
@@ -293,9 +293,9 @@ namespace MCTOPP.Models.Algorithm
                 return true;
             }).ToList();
 
-            var pivots = new Dictionary<int, List<SelectedPoi>>[input.TourCount];
+            var pivots = new Dictionary<string, List<SelectedPoi>>[input.TourCount];
             for (int i = 0; i < pivots.Length; i++)
-                pivots[i] = new Dictionary<int, List<SelectedPoi>>();
+                pivots[i] = new Dictionary<string, List<SelectedPoi>>();
             for (int i = 0; i < patternPois.Length; i++)
             {
                 var pattern = patternPois[i];
@@ -351,11 +351,11 @@ namespace MCTOPP.Models.Algorithm
             return inserted;
         }
 
-        private (int id, int pos, int tour, int type) FindPoiWithHighestSpace(Solution S, Dictionary<int, List<SelectedPoi>>[] P)
+        private (int id, int pos, int tour, string type) FindPoiWithHighestSpace(Solution S, Dictionary<string, List<SelectedPoi>>[] P)
         {
             var tour = 0;
             var pos = 0;
-            var type = 0;
+            var type = "";
             var space = S.FilledSpaces[tour].ElementAt(pos);
             var pivots = new List<int>();
 
@@ -392,12 +392,12 @@ namespace MCTOPP.Models.Algorithm
             return (id: space.Key, pos: pos, tour: tour, type: type);
         }
 
-        private int PoiTypeSelectionPolicy(int[] types, Dictionary<int, int> counts, int prefferedType)
+        private string PoiTypeSelectionPolicy(string[] types, Dictionary<string, int> counts, string prefferedType)
         {
             if (types.Contains(prefferedType))
                 return prefferedType;
 
-            int result = types[0];
+            string result = types[0];
             for (int i = 1; i < types.Length; i++)
             {
                 var candidate = types[i];
@@ -420,7 +420,7 @@ namespace MCTOPP.Models.Algorithm
             return t == T ? 0 : t;
         }
 
-        private void RemoveRandom(Solution S, List<Poi> Q, Dictionary<int, List<SelectedPoi>>[] P)
+        private void RemoveRandom(Solution S, List<Poi> Q, Dictionary<string, List<SelectedPoi>>[] P)
         {
             var selected = new List<int>();
             foreach (var tour in P)
@@ -491,7 +491,7 @@ namespace MCTOPP.Models.Algorithm
             }
         }
 
-        private void SwapPivots(Solution S, List<Poi> Q, Dictionary<int, List<SelectedPoi>>[] P)
+        private void SwapPivots(Solution S, List<Poi> Q, Dictionary<string, List<SelectedPoi>>[] P)
         {
             for (int i = 0; i < S.TourCount; i++)
             {
@@ -516,7 +516,7 @@ namespace MCTOPP.Models.Algorithm
 
                     var replaceTourInS = -1;
                     var replaceIndexInS = -1;
-                    var replaceTypeInS = 0;
+                    var replaceTypeInS = "";
                     for (int m = 0; m < S.TourCount; m++)
                     {
                         for (int n = 0; n < S.Pois[m].Count; n++)

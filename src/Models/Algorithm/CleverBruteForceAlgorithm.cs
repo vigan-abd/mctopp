@@ -14,12 +14,12 @@ namespace MCTOPP.Models.Algorithm
             Solution best = null;
 
             var metadata = MetaData.Create(input);
-            var pivots = new Dictionary<int, List<Poi>>[input.TourCount];
+            var pivots = new Dictionary<string, List<Poi>>[input.TourCount];
 
             // Find pois
             for (int t = 0; t < input.Patterns.Count; t++)
             {
-                var pois = new Dictionary<int, List<Poi>>();
+                var pois = new Dictionary<string, List<Poi>>();
 
                 foreach (var poiType in input.Patterns[t])
                 {

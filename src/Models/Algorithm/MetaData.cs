@@ -18,9 +18,9 @@ namespace MCTOPP.Models.Algorithm
         public Dictionary<int, (float From, float To)> PoiWorkingHours { get; set; }
         public Dictionary<int, Dictionary<int, float>> TravelTimes { get; set; }
         public Dictionary<int, float> TravelAverages { get; set; }
-        public Dictionary<int, int[]> PoiTypes { get; set; }
-        public Dictionary<int, int> MaxPoisOfType { get; set; }
-        public Dictionary<int, int[]> Patterns { get; set; }
+        public Dictionary<int, string[]> PoiTypes { get; set; }
+        public Dictionary<string, int> MaxPoisOfType { get; set; }
+        public Dictionary<int, string[]> Patterns { get; set; }
         public Dictionary<int, float> Scores { get; set; }
 
         public static MetaData Create(ProblemInput input)
@@ -29,7 +29,7 @@ namespace MCTOPP.Models.Algorithm
             var durations = new Dictionary<int, float>();
             var travelTimes = new Dictionary<int, Dictionary<int, float>>();
             var hours = new Dictionary<int, (float From, float To)>();
-            var poiTypes = new Dictionary<int, int[]>();
+            var poiTypes = new Dictionary<int, string[]>();
             var scores = new Dictionary<int, float>();
             var poiIndex = new Dictionary<int, Poi>();
 
@@ -61,16 +61,16 @@ namespace MCTOPP.Models.Algorithm
                 travelAverages.Add(kv.Key, kv.Value.Sum(x => x.Value) / kv.Value.Count);
             }
 
-            var patterns = new Dictionary<int, int[]>();
+            var patterns = new Dictionary<int, string[]>();
             for (int i = 0; i < input.Patterns.Count; i++)
             {
                 patterns.Add(i, input.Patterns[i]);
             }
 
-            var maxPoisOfType = new Dictionary<int, int>();
+            var maxPoisOfType = new Dictionary<string, int>();
             for (int i = 0; i < input.MaxPoisOfType.Count; i++)
             {
-                maxPoisOfType.Add(i + 1, input.MaxPoisOfType[i]);
+                maxPoisOfType.Add((i + 1).ToString(), input.MaxPoisOfType[i]);
             }
 
             return new MetaData()

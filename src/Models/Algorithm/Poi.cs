@@ -12,7 +12,7 @@ namespace MCTOPP.Models.Algorithm
         public float Open { get; set; }
         public float Close { get; set; }
         public float Cost { get; set; }
-        public int[] Type { get; set; }
+        public string[] Type { get; set; }
 
         public override string ToString()
         {

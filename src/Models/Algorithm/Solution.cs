@@ -36,10 +36,10 @@ namespace MCTOPP.Models.Algorithm
         public List<int>[] Pois { get; set; }
 
         /// <summary>Poi type of each item, {id, type} keypair</summary>
-        public Dictionary<int, int> PoiTypes { get; set; }
+        public Dictionary<int, string> PoiTypes { get; set; }
 
         /// <summary>Count for each poi type inside solution</summary>
-        public Dictionary<int, int> PoiTypeCount { get; set; }
+        public Dictionary<string, int> PoiTypeCount { get; set; }
 
         public Dictionary<int, FilledSpace>[] FilledSpaces { get; set; }
 
@@ -55,8 +55,8 @@ namespace MCTOPP.Models.Algorithm
             this.TourCount = tourCount;
 
             this.Pois = new List<int>[this.TourCount];
-            this.PoiTypes = new Dictionary<int, int>();
-            this.PoiTypeCount = new int[10].Select((x, i) => i + 1).ToDictionary(k => k, v => 0);
+            this.PoiTypes = new Dictionary<int, string>();
+            this.PoiTypeCount = new int[10].Select((x, i) => i + 1).ToDictionary(k => k.ToString(), v => 0);
 
             this.FilledSpaces = new Dictionary<int, FilledSpace>[this.TourCount];
             this.EmptySpaces = new List<EmptySpace>[this.TourCount];
@@ -78,7 +78,7 @@ namespace MCTOPP.Models.Algorithm
             }
         }
 
-        public bool Insert(int id, int type, int pos, int tour)
+        public bool Insert(int id, string type, int pos, int tour)
         {
             var pois = this.Pois[tour];
             var filledSpaces = this.FilledSpaces[tour];
@@ -269,7 +269,7 @@ namespace MCTOPP.Models.Algorithm
             return true;
         }
 
-        public bool Swap(int id, int type, int pos, int tour)
+        public bool Swap(int id, string type, int pos, int tour)
         {
             var pois = this.Pois[tour];
             var filledSpaces = this.FilledSpaces[tour];
@@ -530,11 +530,11 @@ namespace MCTOPP.Models.Algorithm
             for (int i = 0; i < this.Pois.Length; i++)
                 clone.Pois[i] = new List<int>(this.Pois[i]);
 
-            clone.PoiTypes = new Dictionary<int, int>();
+            clone.PoiTypes = new Dictionary<int, string>();
             foreach (var item in this.PoiTypes)
                 clone.PoiTypes.Add(item.Key, item.Value);
 
-            clone.PoiTypeCount = new Dictionary<int, int>();
+            clone.PoiTypeCount = new Dictionary<string, int>();
             foreach (var item in this.PoiTypeCount)
                 clone.PoiTypeCount.Add(item.Key, item.Value);
 
