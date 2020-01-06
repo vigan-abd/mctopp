@@ -74,13 +74,7 @@ namespace MCTOPP.Models.Algorithm
             while (T > 0)
             {
                 var a = this.FindPoiWithHighestSpace(S, P);
-                var isPivot = false;
-
-                if (P[a.tour].ContainsKey(a.type))
-                {
-                    var pivot = P[a.tour][a.type].Find(p => p.IsSelected);
-                    isPivot = pivot.Id == a.id;
-                }
+                var isPivot = this.IsPivot(a.id, P);
 
                 if (initialSolutionCriteria == InitialSolutionCriteria.AverageDistance)
                     Q = Q.OrderByDescending(p => S.MetaData.TravelAverages[p.Id]).ToList(); // add randomness
@@ -116,11 +110,6 @@ namespace MCTOPP.Models.Algorithm
                             Q[index] = S.MetaData.PoiIndex[a.id];
                             for (int k = inserted.Count - 1; k >= 0; k--)
                                 Q.RemoveAt(inserted[k]);
-
-                            if (isPivot)
-                            {
-                                // test
-                            }
                         }
 
                         if (S.Score > best.Score)
@@ -192,8 +181,8 @@ namespace MCTOPP.Models.Algorithm
                         candidates = candidates.OrderByDescending(p => metadata.TravelAverages[p.Id]).ToList();
                     else
                         candidates = candidates.OrderByDescending(p => p.Score).ToList();
-                    pois.Add(poiType, candidates);
-                    select.Add(poiType, 0);
+                    pois.Add(this.UniquePivot(poiType, i, pois.Count), candidates);
+                    select.Add(this.UniquePivot(poiType, i, select.Count), 0);
                 }
                 patternPois[i] = pois;
                 selected[i] = select;
@@ -227,7 +216,8 @@ namespace MCTOPP.Models.Algorithm
                     for (int k = select[pivot.Key]; k < pivot.Value.Count; k++)
                     {
                         var poi = pivot.Value[k];
-                        found = solution.Insert(poi.Id, pivot.Key, solution.Pois[i].Count, i);
+                        var primitiveType = this.ExtractPivot(pivot.Key);
+                        found = solution.Insert(poi.Id, primitiveType, solution.Pois[i].Count, i);
                         if (found)
                         {
                             select[pivot.Key] = k;
@@ -410,14 +400,14 @@ namespace MCTOPP.Models.Algorithm
         {
             // T[i+1] = T[i] * b ** i, b closer to 1 -> slower decrease
             var t = Math.Round(T * Math.Pow(coolingFactor, i), 2);
-            return t == T ? 0 : t;
+            return t <= 0.01 || t < 1 && T == t ? 0 : t;
         }
 
         public double LundyCoolingFunction(double T)
         {
             // T[i+1] = T[i] / (1 + b * T[i]), b closer to 0 -> less time in high temp
             var t = Math.Round(T / (1 + coolingFactor * T), 2);
-            return t == T ? 0 : t;
+            return t <= 0.01 || t < 1 && T == t ? 0 : t;
         }
 
         private void RemoveRandom(Solution S, List<Poi> Q, Dictionary<string, List<SelectedPoi>>[] P)
@@ -450,7 +440,7 @@ namespace MCTOPP.Models.Algorithm
                 var list = notPivotPositions[tour];
                 var pois = S.Pois[tour];
 
-                if (list.Count == 0) continue;
+                if (list.Count == 0) break;
 
                 var index = rand.Next(0, list.Count);
                 var poi = list[index];
@@ -535,7 +525,8 @@ namespace MCTOPP.Models.Algorithm
                     if (replaceTourInS == -1 && replaceIndexInS == -1)
                     {
                         var replacePoiIndexInQ = Q.FindIndex(p => p.Id == replacePoi.Id);
-                        var res = S.Swap(replacePoi.Id, selectedPivot.Key, selectedPoiIndexInS, i);
+                        var primitiveType = this.ExtractPivot(selectedPivot.Key);
+                        var res = S.Swap(replacePoi.Id, primitiveType, selectedPoiIndexInS, i);
                         if (res && S.IsValid)
                         {
                             // Add old pivot to Q and remove new pivot from Q
@@ -586,6 +577,27 @@ namespace MCTOPP.Models.Algorithm
                 strP + Environment.NewLine +
                 strPattern
             );
+        }
+
+        private bool IsPivot(int id, Dictionary<string, List<SelectedPoi>>[] P)
+        {
+            foreach (var tour in P)
+            {
+                foreach (var item in tour)
+                {
+                    if (item.Value.Find(x => x.IsSelected).Id == id)
+                        return true;
+                }
+            }
+            return false;
+        }
+
+        public string UniquePivot(string type, int tour, int pos) {
+            return $"{type}-{tour}-{pos}";
+        }
+
+        public string ExtractPivot(string key) {
+            return key.Split('-')[0];
         }
 
         public string PrintParams()
