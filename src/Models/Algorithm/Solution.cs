@@ -218,7 +218,7 @@ namespace MCTOPP.Models.Algorithm
             }
 
             // Check if exceeds return time to point 0
-            if (pos == pois.Count - 1)
+            if (pos == pois.Count - 1 && pos != 0)
             {
                 var lastId = pois[pois.Count - 2];
                 var last = filledSpaces[lastId];
@@ -414,8 +414,10 @@ namespace MCTOPP.Models.Algorithm
             // Travel time is included in duration
             space.End = (float)Math.Round(space.Start + poiDuration + travelTime, 2);
 
-
-            if (space.End > poiOpenClose.To)
+            // Visit may last more than close hour, but must be reached (start time) before close hour
+            // if (space.End > poiOpenClose.To)
+            //     return null;
+            if (space.Start > poiOpenClose.To)
                 return null;
 
             return space;
