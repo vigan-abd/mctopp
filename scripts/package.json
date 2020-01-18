@@ -1,0 +1,11 @@
+{
+  "name": "scripts",
+  "version": "1.0.0",
+  "description": "MCTOPP experimenting scripts",
+  "main": "calc-experiment-results.js",
+  "author": "vigan.abd",
+  "license": "ISC",
+  "dependencies": {
+    "mysql": "^2.17.1"
+  }
+}

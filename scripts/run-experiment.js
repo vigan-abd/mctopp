@@ -1,4 +1,5 @@
 // Usage: node run-experiment.js instances-file params-file program-file
+// Example: node ./run-experiment.js ../instances/MCTOPP-Solomon/MCTOPMTWP-4-rc108-out.txt ./params.txt ../program
 
 const fs = require('fs');
 const path = require('path');

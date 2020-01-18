@@ -2,6 +2,9 @@ bin
 obj
 .vscode
 program
-*.log
 .vs
+*.log
 *.csv
+*.sql
+node_modules
+package-lock.json
