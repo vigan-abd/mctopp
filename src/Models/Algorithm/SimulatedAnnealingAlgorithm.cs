@@ -181,8 +181,8 @@ namespace MCTOPP.Models.Algorithm
                         candidates = candidates.OrderByDescending(p => metadata.TravelAverages[p.Id]).ToList();
                     else
                         candidates = candidates.OrderByDescending(p => p.Score).ToList();
-                    pois.Add(this.UniquePivot(poiType, i, pois.Count), candidates);
-                    select.Add(this.UniquePivot(poiType, i, select.Count), 0);
+                    pois.Add(Util.UniquePivot(poiType, i, pois.Count), candidates);
+                    select.Add(Util.UniquePivot(poiType, i, select.Count), 0);
                 }
                 patternPois[i] = pois;
                 selected[i] = select;
@@ -216,7 +216,7 @@ namespace MCTOPP.Models.Algorithm
                     for (int k = select[pivot.Key]; k < pivot.Value.Count; k++)
                     {
                         var poi = pivot.Value[k];
-                        var primitiveType = this.ExtractPivot(pivot.Key);
+                        var primitiveType = Util.ExtractPivot(pivot.Key);
                         found = solution.Insert(poi.Id, primitiveType, solution.Pois[i].Count, i);
                         if (found)
                         {
@@ -525,7 +525,7 @@ namespace MCTOPP.Models.Algorithm
                     if (replaceTourInS == -1 && replaceIndexInS == -1)
                     {
                         var replacePoiIndexInQ = Q.FindIndex(p => p.Id == replacePoi.Id);
-                        var primitiveType = this.ExtractPivot(selectedPivot.Key);
+                        var primitiveType = Util.ExtractPivot(selectedPivot.Key);
                         var res = S.Swap(replacePoi.Id, primitiveType, selectedPoiIndexInS, i);
                         if (res && S.IsValid)
                         {
@@ -590,14 +590,6 @@ namespace MCTOPP.Models.Algorithm
                 }
             }
             return false;
-        }
-
-        public string UniquePivot(string type, int tour, int pos) {
-            return $"{type}-{tour}-{pos}";
-        }
-
-        public string ExtractPivot(string key) {
-            return key.Split('-')[0];
         }
 
         public string PrintParams()

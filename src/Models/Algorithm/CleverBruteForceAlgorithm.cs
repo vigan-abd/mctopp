@@ -24,7 +24,7 @@ namespace MCTOPP.Models.Algorithm
                 foreach (var poiType in input.Patterns[t])
                 {
                     var candidates = input.Pois.Where(p => p.Type.Any(type => type == poiType)).OrderByDescending(p => p.Score).ToList();
-                    pois.Add(poiType, candidates);
+                    pois.Add(Util.UniquePivot(poiType, t, pois.Count), candidates);
                 }
                 pivots[t] = pois;
             }
@@ -43,7 +43,7 @@ namespace MCTOPP.Models.Algorithm
                         foreach (var s in validSolutions)
                         {
                             var clone = (Solution)s.Clone();
-                            if (clone.Insert(poi.Id, item.Key, clone.Pois[t].Count, t))
+                            if (clone.Insert(poi.Id, Util.ExtractPivot(item.Key), clone.Pois[t].Count, t))
                                 clones.Add(clone);
                         }
                     }
