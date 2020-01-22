@@ -99,8 +99,8 @@ const [_, paramsFile, programFile] = process.argv.slice(2).map(f => {
 });
 const instanceFile = process.argv[2];
 
-if (!instanceFile || !paramsFile) {
-  console.log("Usage: node run-experiment.js instances-file params-file")
+if (!instanceFile || !paramsFile || !programFile) {
+  console.log("Usage: node run-experiment.js instances-file params-file program-file")
   process.exit(-1);
 }
 const logFile = `${__dirname}/output/${path.basename(instanceFile)}.log`;
