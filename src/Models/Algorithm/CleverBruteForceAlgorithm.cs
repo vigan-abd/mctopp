@@ -59,6 +59,7 @@ namespace MCTOPP.Models.Algorithm
 
             // Find others
             best = validSolutions.Count > 0 ? (Solution)(validSolutions.First().Clone()) : null;
+            logger.Info($"iter: {iter} of {iterCount}, initial best: {best.PrintSummary()} Score: {best.Score}");
             foreach (var initialSolution in validSolutions)
             {
                 GC.Collect();
